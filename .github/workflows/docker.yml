@@ -1,4 +1,4 @@
-name: "Push docker image to GCR"
+name: "Docker Image"
 
 on:
   push:
