@@ -1,3 +1,5 @@
+> [Differences](./differ.md) from the official repository. If you like clean, beautiful code, you'll love this fork.
+>
 # taiko-client
 
 [![CI](https://github.com/taikoxyz/taiko-client/actions/workflows/test.yml/badge.svg)](https://github.com/taikoxyz/taiko-client/actions/workflows/test.yml)
