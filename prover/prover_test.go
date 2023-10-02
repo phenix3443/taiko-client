@@ -10,19 +10,19 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
+
 	"github.com/taikoxyz/taiko-client/driver"
 	"github.com/taikoxyz/taiko-client/pkg/jwt"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	"github.com/taikoxyz/taiko-client/proposer"
-	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
-
 	producer "github.com/taikoxyz/taiko-client/prover/proof_producer"
-	"github.com/taikoxyz/taiko-client/testutils"
-	"github.com/taikoxyz/taiko-client/testutils/helper"
+	"github.com/taikoxyz/taiko-client/tests"
+	"github.com/taikoxyz/taiko-client/tests/helper"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
 )
 
 type ProverTestSuite struct {
-	testutils.ClientTestSuite
+	tests.ClientTestSuite
 	p         *Prover
 	cancel    context.CancelFunc
 	d         *driver.Driver
@@ -34,7 +34,7 @@ func (s *ProverTestSuite) SetupTest() {
 	s.ClientTestSuite.SetupTest()
 
 	// Init prover
-	l1ProverPrivKey := testutils.ProverPrivKey
+	l1ProverPrivKey := tests.ProverPrivKey
 
 	proverServerUrl := helper.LocalRandomProverEndpoint()
 	port, err := strconv.Atoi(proverServerUrl.Port())
@@ -48,7 +48,7 @@ func (s *ProverTestSuite) SetupTest() {
 		L2WsEndpoint:                    s.L2.WsEndpoint(),
 		L2HttpEndpoint:                  s.L2.HttpEndpoint(),
 		TaikoL1Address:                  s.L1.TaikoL1Address,
-		TaikoL2Address:                  testutils.TaikoL2Address,
+		TaikoL2Address:                  tests.TaikoL2Address,
 		L1ProverPrivKey:                 l1ProverPrivKey,
 		OracleProverPrivateKey:          l1ProverPrivKey,
 		OracleProver:                    false,
@@ -62,7 +62,7 @@ func (s *ProverTestSuite) SetupTest() {
 	}
 	s.p, err = New(ctx, cfg)
 	s.NoError(err)
-	jwtSecret, err := jwt.ParseSecretFromFile(testutils.JwtSecretFile)
+	jwtSecret, err := jwt.ParseSecretFromFile(tests.JwtSecretFile)
 	s.NoError(err)
 	s.NotEmpty(jwtSecret)
 	s.rpcClient = helper.NewWsRpcClient(&s.ClientTestSuite)
@@ -80,14 +80,14 @@ func (s *ProverTestSuite) SetupTest() {
 		L2Endpoint:       s.L2.WsEndpoint(),
 		L2EngineEndpoint: s.L2.AuthEndpoint(),
 		TaikoL1Address:   s.L1.TaikoL1Address,
-		TaikoL2Address:   testutils.TaikoL2Address,
+		TaikoL2Address:   tests.TaikoL2Address,
 		JwtSecret:        string(jwtSecret),
 	}
 	s.d, err = driver.New(ctx, dCfg)
 	s.NoError(err)
 
 	// Init proposer
-	l1ProposerPrivKey := testutils.ProposerPrivKey
+	l1ProposerPrivKey := tests.ProposerPrivKey
 	s.Nil(err)
 
 	proposeInterval := 1024 * time.Hour // No need to periodically propose transactions list in unit tests
@@ -95,10 +95,10 @@ func (s *ProverTestSuite) SetupTest() {
 		L1Endpoint:                         s.L1.WsEndpoint(),
 		L2Endpoint:                         s.L2.WsEndpoint(),
 		TaikoL1Address:                     s.L1.TaikoL1Address,
-		TaikoL2Address:                     testutils.TaikoL2Address,
+		TaikoL2Address:                     tests.TaikoL2Address,
 		TaikoTokenAddress:                  s.L1.TaikoL1TokenAddress,
 		L1ProposerPrivKey:                  l1ProposerPrivKey,
-		L2SuggestedFeeRecipient:            testutils.ProposerAddress,
+		L2SuggestedFeeRecipient:            tests.ProposerAddress,
 		ProposeInterval:                    &proposeInterval,
 		MaxProposedTxListsPerEpoch:         1,
 		WaitReceiptTimeout:                 10 * time.Second,
@@ -126,7 +126,7 @@ func (s *ProverTestSuite) TestName() {
 func (s *ProverTestSuite) TestOnBlockProposed() {
 	s.p.cfg.OracleProver = true
 	// Init prover
-	l1ProverPrivKey := testutils.ProverPrivKey
+	l1ProverPrivKey := tests.ProverPrivKey
 	s.p.cfg.OracleProverPrivateKey = l1ProverPrivKey
 	// Valid block
 	e := helper.ProposeAndInsertValidBlock(&s.ClientTestSuite, s.proposer, s.d.ChainSyncer().CalldataSyncer())

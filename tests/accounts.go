@@ -1,4 +1,4 @@
-package testutils
+package tests
 
 import (
 	"context"
@@ -73,7 +73,7 @@ func ensureProverBalance(c *gethContainer) error {
 	if err != nil {
 		return err
 	}
-	premintAmount, _ := new(big.Int).SetString(premintTokenAmount, 10)
+	premintAmount, _ := new(big.Int).SetString(preMintTokenAmount, 10)
 	taikoToken, err := bindings.NewTaikoToken(c.TaikoL1TokenAddress, cli)
 	if err != nil {
 		return err

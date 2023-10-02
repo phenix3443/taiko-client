@@ -11,19 +11,20 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/stretchr/testify/suite"
+
 	"github.com/taikoxyz/taiko-client/driver/state"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	"github.com/taikoxyz/taiko-client/proposer"
 	"github.com/taikoxyz/taiko-client/prover/server"
-	"github.com/taikoxyz/taiko-client/testutils"
-	"github.com/taikoxyz/taiko-client/testutils/helper"
+	"github.com/taikoxyz/taiko-client/tests"
+	"github.com/taikoxyz/taiko-client/tests/helper"
 )
 
 type ChainSyncerTestSuite struct {
-	testutils.ClientTestSuite
+	tests.ClientTestSuite
 	s               *L2ChainSyncer
 	snapshotID      string
-	p               testutils.Proposer
+	p               tests.Proposer
 	rpcClient       *rpc.Client
 	proverEndpoints []*url.URL
 	proverServer    *server.ProverServer
@@ -46,7 +47,7 @@ func (s *ChainSyncerTestSuite) SetupTest() {
 	s.Nil(err)
 	s.s = syncer
 
-	l1ProposerPrivKey := testutils.ProposerPrivKey
+	l1ProposerPrivKey := tests.ProposerPrivKey
 	proposeInterval := 1024 * time.Hour // No need to periodically propose transactions list in unit tests
 
 	s.proverEndpoints, s.proverServer, err = helper.DefaultFakeProver(&s.ClientTestSuite, s.rpcClient)
@@ -56,10 +57,10 @@ func (s *ChainSyncerTestSuite) SetupTest() {
 		L1Endpoint:                         s.L1.WsEndpoint(),
 		L2Endpoint:                         s.L2.WsEndpoint(),
 		TaikoL1Address:                     s.L1.TaikoL1Address,
-		TaikoL2Address:                     testutils.TaikoL2Address,
+		TaikoL2Address:                     tests.TaikoL2Address,
 		TaikoTokenAddress:                  s.L1.TaikoL1TokenAddress,
 		L1ProposerPrivKey:                  l1ProposerPrivKey,
-		L2SuggestedFeeRecipient:            testutils.L2SuggestedFeeRecipientAddress,
+		L2SuggestedFeeRecipient:            tests.L2SuggestedFeeRecipientAddress,
 		ProposeInterval:                    &proposeInterval,
 		MaxProposedTxListsPerEpoch:         1,
 		WaitReceiptTimeout:                 10 * time.Second,
@@ -95,8 +96,8 @@ func (s *ChainSyncerTestSuite) TestAheadOfProtocolVerifiedHead2() {
 	helper.ProposeAndInsertEmptyBlocks(&s.ClientTestSuite, s.p, s.s.calldataSyncer)
 
 	// NOTE: need to prove the proposed blocks to be verified, writing helper function
-	// generate transactopts to interact with TaikoL1 contract with.
-	privKey := testutils.ProverPrivKey
+	// generate bind.TransactOpts to interact with TaikoL1 contract with.
+	privKey := tests.ProverPrivKey
 	opts, err := bind.NewKeyedTransactorWithChainID(privKey, s.rpcClient.L1ChainID)
 	s.Nil(err)
 

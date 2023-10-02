@@ -1,4 +1,4 @@
-package testutils
+package tests
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	premintTokenAmount = "92233720368547758070000000000000"
+	preMintTokenAmount = "92233720368547758070000000000000"
 )
 
 type ClientTestSuite struct {
@@ -76,9 +76,9 @@ func (s *ClientTestSuite) NewL2(name string) *gethContainer {
 	return c
 }
 
-func (s *ClientTestSuite) SetL1Automine(automine bool) {
+func (s *ClientTestSuite) SetL1AutoMine(autoMine bool) {
 	cli, err := rpc.DialContext(context.Background(), s.L1.HttpEndpoint())
 	s.NoError(err)
-	s.NoError(cli.CallContext(context.Background(), nil, "evm_setAutomine", automine))
+	s.NoError(cli.CallContext(context.Background(), nil, "evm_setAutomine", autoMine))
 	cli.Close()
 }

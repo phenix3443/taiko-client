@@ -3,14 +3,14 @@ package main
 import (
 	"time"
 
-	"github.com/taikoxyz/taiko-client/testutils"
+	"github.com/taikoxyz/taiko-client/tests"
 	"github.com/urfave/cli/v2"
 )
 
 var rpcTimeout = 5 * time.Second
 
 type cmdSuit struct {
-	testutils.ClientTestSuite
+	tests.ClientTestSuite
 	app  *cli.App
 	args map[string]interface{}
 }

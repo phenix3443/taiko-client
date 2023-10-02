@@ -9,18 +9,19 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
+
 	"github.com/taikoxyz/taiko-client/driver/state"
 	"github.com/taikoxyz/taiko-client/pkg/jwt"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	"github.com/taikoxyz/taiko-client/proposer"
 	"github.com/taikoxyz/taiko-client/prover/server"
-	"github.com/taikoxyz/taiko-client/testutils"
-	"github.com/taikoxyz/taiko-client/testutils/helper"
+	"github.com/taikoxyz/taiko-client/tests"
+	"github.com/taikoxyz/taiko-client/tests/helper"
 	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings/encoding"
 )
 
 type DriverTestSuite struct {
-	testutils.ClientTestSuite
+	tests.ClientTestSuite
 	cancel          context.CancelFunc
 	p               *proposer.Proposer
 	d               *Driver
@@ -31,7 +32,7 @@ type DriverTestSuite struct {
 
 func (s *DriverTestSuite) SetupTest() {
 	s.ClientTestSuite.SetupTest()
-	jwtSecret, err := jwt.ParseSecretFromFile(testutils.JwtSecretFile)
+	jwtSecret, err := jwt.ParseSecretFromFile(tests.JwtSecretFile)
 	s.NoError(err)
 	s.rpcClient = helper.NewWsRpcClient(&s.ClientTestSuite)
 	// Init driver
@@ -42,7 +43,7 @@ func (s *DriverTestSuite) SetupTest() {
 		L2Endpoint:       s.L2.WsEndpoint(),
 		L2EngineEndpoint: s.L2.AuthEndpoint(),
 		TaikoL1Address:   s.L1.TaikoL1Address,
-		TaikoL2Address:   testutils.TaikoL2Address,
+		TaikoL2Address:   tests.TaikoL2Address,
 		JwtSecret:        string(jwtSecret),
 	}
 	s.d, err = New(ctx, cfg)
@@ -56,10 +57,10 @@ func (s *DriverTestSuite) SetupTest() {
 		L1Endpoint:                         s.L1.WsEndpoint(),
 		L2Endpoint:                         s.L2.WsEndpoint(),
 		TaikoL1Address:                     s.L1.TaikoL1Address,
-		TaikoL2Address:                     testutils.TaikoL2Address,
+		TaikoL2Address:                     tests.TaikoL2Address,
 		TaikoTokenAddress:                  s.L1.TaikoL1TokenAddress,
-		L1ProposerPrivKey:                  testutils.ProposerPrivKey,
-		L2SuggestedFeeRecipient:            testutils.L2SuggestedFeeRecipientAddress,
+		L1ProposerPrivKey:                  tests.ProposerPrivKey,
+		L2SuggestedFeeRecipient:            tests.L2SuggestedFeeRecipientAddress,
 		ProposeInterval:                    &proposeInterval,
 		MaxProposedTxListsPerEpoch:         1,
 		WaitReceiptTimeout:                 10 * time.Second,

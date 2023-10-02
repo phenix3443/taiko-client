@@ -1,4 +1,4 @@
-package testutils
+package tests
 
 import (
 	"github.com/ethereum/go-ethereum/common"

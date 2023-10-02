@@ -16,13 +16,14 @@ import (
 	echo "github.com/labstack/echo/v4"
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/suite"
+
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	capacity "github.com/taikoxyz/taiko-client/prover/capacity_manager"
-	"github.com/taikoxyz/taiko-client/testutils"
+	"github.com/taikoxyz/taiko-client/tests"
 )
 
 type ProverServerTestSuite struct {
-	testutils.ClientTestSuite
+	tests.ClientTestSuite
 	ps        *ProverServer
 	ws        *httptest.Server // web server
 	rpcClient *rpc.Client
@@ -30,17 +31,17 @@ type ProverServerTestSuite struct {
 
 func (s *ProverServerTestSuite) SetupTest() {
 	s.ClientTestSuite.SetupTest()
-	l1ProverPrivKey := testutils.ProverPrivKey
+	l1ProverPrivKey := tests.ProverPrivKey
 	var err error
 	timeout := 5 * time.Second
 	s.rpcClient, err = rpc.NewClient(context.Background(), &rpc.ClientConfig{
 		L1Endpoint:        s.L1.WsEndpoint(),
 		L2Endpoint:        s.L2.WsEndpoint(),
 		TaikoL1Address:    s.L1.TaikoL1Address,
-		TaikoL2Address:    testutils.TaikoL2Address,
+		TaikoL2Address:    tests.TaikoL2Address,
 		TaikoTokenAddress: s.L1.TaikoL1TokenAddress,
 		L2EngineEndpoint:  s.L2.AuthEndpoint(),
-		JwtSecret:         testutils.JwtSecretFile,
+		JwtSecret:         tests.JwtSecretFile,
 		RetryInterval:     backoff.DefaultMaxInterval,
 		Timeout:           &timeout,
 	})

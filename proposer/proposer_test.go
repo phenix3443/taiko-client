@@ -12,16 +12,17 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/stretchr/testify/suite"
+
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	"github.com/taikoxyz/taiko-client/prover/server"
-	"github.com/taikoxyz/taiko-client/testutils"
-	"github.com/taikoxyz/taiko-client/testutils/helper"
+	"github.com/taikoxyz/taiko-client/tests"
+	"github.com/taikoxyz/taiko-client/tests/helper"
 	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
 	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings/encoding"
 )
 
 type ProposerTestSuite struct {
-	testutils.ClientTestSuite
+	tests.ClientTestSuite
 	p               *Proposer
 	cancel          context.CancelFunc
 	rpcClient       *rpc.Client
@@ -43,10 +44,10 @@ func (s *ProposerTestSuite) SetupTest() {
 		L1Endpoint:                          s.L1.WsEndpoint(),
 		L2Endpoint:                          s.L2.HttpEndpoint(),
 		TaikoL1Address:                      s.L1.TaikoL1Address,
-		TaikoL2Address:                      testutils.TaikoL2Address,
+		TaikoL2Address:                      tests.TaikoL2Address,
 		TaikoTokenAddress:                   s.L1.TaikoL1TokenAddress,
-		L1ProposerPrivKey:                   testutils.ProposerPrivKey,
-		L2SuggestedFeeRecipient:             testutils.ProposerAddress,
+		L1ProposerPrivKey:                   tests.ProposerPrivKey,
+		L2SuggestedFeeRecipient:             tests.ProposerAddress,
 		ProposeInterval:                     &proposeInterval,
 		MaxProposedTxListsPerEpoch:          1,
 		ProposeBlockTxReplacementMultiplier: 2,
@@ -83,7 +84,7 @@ func (s *ProposerTestSuite) TestProposeOp() {
 		close(sink)
 	}()
 
-	nonce, err := s.p.rpc.L2.PendingNonceAt(context.Background(), testutils.ProposerAddress)
+	nonce, err := s.p.rpc.L2.PendingNonceAt(context.Background(), tests.ProposerAddress)
 	s.Nil(err)
 
 	gaslimit := 21000
@@ -105,7 +106,7 @@ func (s *ProposerTestSuite) TestProposeOp() {
 		Value:     common.Big1,
 	})
 
-	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(s.p.rpc.L2ChainID), testutils.ProposerPrivKey)
+	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(s.p.rpc.L2ChainID), tests.ProposerPrivKey)
 	s.Nil(err)
 	s.Nil(s.p.rpc.L2.SendTransaction(context.Background(), signedTx))
 
@@ -163,8 +164,8 @@ func (s *ProposerTestSuite) TestSendProposeBlockTx() {
 		[]byte{},
 	)
 
-	s.SetL1Automine(false)
-	defer s.SetL1Automine(true)
+	s.SetL1AutoMine(false)
+	defer s.SetL1AutoMine(true)
 
 	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(s.rpcClient.L1ChainID), s.p.l1ProposerPrivKey)
 	s.Nil(err)
@@ -207,8 +208,8 @@ func (s *ProposerTestSuite) TestAssignProverSuccessFirstRound() {
 		CacheTxListInfo: false,
 	}
 
-	s.SetL1Automine(false)
-	defer s.SetL1Automine(true)
+	s.SetL1AutoMine(false)
+	defer s.SetL1AutoMine(true)
 
 	_, fee, err := s.p.proverSelector.AssignProver(context.Background(), meta)
 

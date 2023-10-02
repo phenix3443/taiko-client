@@ -8,13 +8,14 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
+
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
-	"github.com/taikoxyz/taiko-client/testutils"
-	"github.com/taikoxyz/taiko-client/testutils/helper"
+	"github.com/taikoxyz/taiko-client/tests"
+	"github.com/taikoxyz/taiko-client/tests/helper"
 )
 
 type BeaconSyncProgressTrackerTestSuite struct {
-	testutils.ClientTestSuite
+	tests.ClientTestSuite
 	t         *SyncProgressTracker
 	rpcClient *rpc.Client
 }

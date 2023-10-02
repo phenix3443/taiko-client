@@ -16,15 +16,15 @@ import (
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	"github.com/taikoxyz/taiko-client/proposer"
 	"github.com/taikoxyz/taiko-client/prover/server"
-	"github.com/taikoxyz/taiko-client/testutils"
-	"github.com/taikoxyz/taiko-client/testutils/helper"
+	"github.com/taikoxyz/taiko-client/tests"
+	"github.com/taikoxyz/taiko-client/tests/helper"
 	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
 )
 
 type CalldataSyncerTestSuite struct {
-	testutils.ClientTestSuite
+	tests.ClientTestSuite
 	s               *Syncer
-	p               testutils.Proposer
+	p               tests.Proposer
 	rpcClient       *rpc.Client
 	proverEndpoints []*url.URL
 	proverServer    *server.ProverServer
@@ -53,10 +53,10 @@ func (s *CalldataSyncerTestSuite) SetupTest() {
 		L1Endpoint:                         s.L1.WsEndpoint(),
 		L2Endpoint:                         s.L2.WsEndpoint(),
 		TaikoL1Address:                     s.L1.TaikoL1Address,
-		TaikoL2Address:                     testutils.TaikoL2Address,
+		TaikoL2Address:                     tests.TaikoL2Address,
 		TaikoTokenAddress:                  s.L1.TaikoL1TokenAddress,
-		L1ProposerPrivKey:                  testutils.ProposerPrivKey,
-		L2SuggestedFeeRecipient:            testutils.ProposerAddress,
+		L1ProposerPrivKey:                  tests.ProposerPrivKey,
+		L2SuggestedFeeRecipient:            tests.ProposerAddress,
 		ProposeInterval:                    &proposeInterval,
 		MaxProposedTxListsPerEpoch:         1,
 		WaitReceiptTimeout:                 10 * time.Second,
@@ -149,7 +149,7 @@ func (s *CalldataSyncerTestSuite) TestInsertNewHead() {
 }
 
 func (s *CalldataSyncerTestSuite) TestTreasuryIncomeAllAnchors() {
-	treasury := testutils.TreasuryAddress
+	treasury := tests.TreasuryAddress
 	s.NotZero(treasury.Big().Uint64())
 
 	balance, err := s.rpcClient.L2.BalanceAt(context.Background(), treasury, nil)
@@ -171,7 +171,7 @@ func (s *CalldataSyncerTestSuite) TestTreasuryIncomeAllAnchors() {
 }
 
 func (s *CalldataSyncerTestSuite) TestTreasuryIncome() {
-	treasury := testutils.TreasuryAddress
+	treasury := tests.TreasuryAddress
 	s.NotZero(treasury.Big().Uint64())
 
 	balance, err := s.rpcClient.L2.BalanceAt(context.Background(), treasury, nil)

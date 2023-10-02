@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/taikoxyz/taiko-client/prover"
-	"github.com/taikoxyz/taiko-client/testutils"
 	"github.com/urfave/cli/v2"
+
+	"github.com/taikoxyz/taiko-client/prover"
+	"github.com/taikoxyz/taiko-client/tests"
 )
 
 var minProofFee = "1024"
@@ -44,7 +45,7 @@ func (s *proverCmdSuite) TestOracleProver() {
 		s.Equal(s.L2.WsEndpoint(), proverConf.L2WsEndpoint)
 		s.Equal(s.L2.HttpEndpoint(), proverConf.L2HttpEndpoint)
 		s.Equal(s.L1.TaikoL1Address, proverConf.TaikoL1Address)
-		s.Equal(testutils.TaikoL2Address, proverConf.TaikoL2Address)
+		s.Equal(tests.TaikoL2Address, proverConf.TaikoL2Address)
 		s.Equal(30*time.Minute, *proverConf.RandomDummyProofDelayLowerBound)
 		s.Equal(time.Hour, *proverConf.RandomDummyProofDelayUpperBound)
 		s.True(proverConf.Dummy)
@@ -109,14 +110,14 @@ func (s *proverCmdSuite) testArgs() map[string]interface{} {
 		L2HTTPEndpointFlag.Name:                    s.L2.HttpEndpoint(),
 		ZkEvmRpcdEndpointFlag.Name:                 os.Getenv("ZK_EVM_RPCD_ENDPOINT"),
 		ZkEvmRpcdParamsPathFlag.Name:               os.Getenv("ZK_EVM_RPCD_PARAMS_PATH"),
-		L1ProverPrivKeyFlag.Name:                   testutils.ProverPrivateKey,
+		L1ProverPrivKeyFlag.Name:                   tests.ProverPrivateKey,
 		MinProofFeeFlag.Name:                       minProofFee,
 		StartingBlockIDFlag.Name:                   0,
 		MaxConcurrentProvingJobsFlag.Name:          1,
 		DummyFlag.Name:                             true,
 		RandomDummyProofDelayFlag.Name:             "30m-1h",
 		OracleProverFlag.Name:                      true,
-		OracleProverPrivateKeyFlag.Name:            testutils.ProverPrivateKey,
+		OracleProverPrivateKeyFlag.Name:            tests.ProverPrivateKey,
 		OracleProofSubmissionDelayFlag.Name:        "10s",
 		ProofSubmissionMaxRetryFlag.Name:           3,
 		ProveBlockTxReplacementMultiplierFlag.Name: 3,

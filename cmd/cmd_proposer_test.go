@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/taikoxyz/taiko-client/proposer"
-	"github.com/taikoxyz/taiko-client/testutils"
 	"github.com/urfave/cli/v2"
+
+	"github.com/taikoxyz/taiko-client/proposer"
+	"github.com/taikoxyz/taiko-client/tests"
 )
 
 var (
@@ -47,7 +48,7 @@ func (s *proposerCmdSuite) TestFlags() {
 		s.Equal(s.L1.WsEndpoint(), proposerConf.L1Endpoint)
 		s.Equal(s.L2.HttpEndpoint(), proposerConf.L2Endpoint)
 		s.Equal(s.L1.TaikoL1Address, proposerConf.TaikoL1Address)
-		s.Equal(testutils.TaikoL2Address, proposerConf.TaikoL2Address)
+		s.Equal(tests.TaikoL2Address, proposerConf.TaikoL2Address)
 		s.Equal(s.L1.TaikoL1TokenAddress, proposerConf.TaikoTokenAddress)
 		s.Equal(float64(10), proposerConf.ProposeInterval.Seconds())
 		s.Equal(1, len(proposerConf.LocalAddresses))
@@ -91,10 +92,10 @@ func (s *proposerCmdSuite) testArgs() map[string]interface{} {
 	a := map[string]interface{}{
 		// proposer flags
 		L2HTTPEndpointFlag.Name:                      s.L2.HttpEndpoint(),
-		L1ProposerPrivKeyFlag.Name:                   testutils.ProposerPrivateKey,
-		L2SuggestedFeeRecipientFlag.Name:             testutils.L2SuggestedFeeRecipientAddress.Hex(),
+		L1ProposerPrivKeyFlag.Name:                   tests.ProposerPrivateKey,
+		L2SuggestedFeeRecipientFlag.Name:             tests.L2SuggestedFeeRecipientAddress.Hex(),
 		ProposeIntervalFlag.Name:                     proposeInterval,
-		TxPoolLocalsFlag.Name:                        testutils.ProposerAddress.Hex(),
+		TxPoolLocalsFlag.Name:                        tests.ProposerAddress.Hex(),
 		TxPoolLocalsOnlyFlag.Name:                    false,
 		ProposeEmptyBlocksIntervalFlag.Name:          proposeInterval,
 		MaxProposedTxListsPerEpochFlag.Name:          1,

@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/taikoxyz/taiko-client/driver"
-	"github.com/taikoxyz/taiko-client/testutils"
 	"github.com/urfave/cli/v2"
+
+	"github.com/taikoxyz/taiko-client/driver"
+	"github.com/taikoxyz/taiko-client/tests"
 )
 
 type driverCmdSuite struct {
@@ -40,7 +41,7 @@ func (s *driverCmdSuite) testArgs() map[string]interface{} {
 	a := map[string]interface{}{
 		L2WSEndpointFlag.Name:          s.L2.WsEndpoint(),
 		L2AuthEndpointFlag.Name:        s.L2.AuthEndpoint(),
-		JWTSecretFlag.Name:             testutils.JwtSecretFile,
+		JWTSecretFlag.Name:             tests.JwtSecretFile,
 		P2PSyncVerifiedBlocksFlag.Name: true,
 		P2PSyncTimeoutFlag.Name:        "120s",
 		CheckPointSyncUrlFlag.Name:     "http://localhost:8545",
@@ -54,7 +55,7 @@ func (s *driverCmdSuite) TestParseFlags() {
 		s.Equal(s.L2.WsEndpoint(), driverConf.L2Endpoint)
 		s.Equal(s.L2.AuthEndpoint(), driverConf.L2EngineEndpoint)
 		s.Equal(s.L1.TaikoL1Address, driverConf.TaikoL1Address)
-		s.Equal(testutils.TaikoL2Address, driverConf.TaikoL2Address)
+		s.Equal(tests.TaikoL2Address, driverConf.TaikoL2Address)
 		s.Equal(120*time.Second, driverConf.P2PSyncTimeout)
 		s.Equal(rpcTimeout, *driverConf.RPCTimeout)
 		s.NotEmpty(driverConf.JwtSecret)

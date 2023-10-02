@@ -18,7 +18,7 @@
         "--l2.auth=http://localhost:28551",
         "--taikoL1=0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
         "--taikoL2=0x1000777700000000000000000000000000000001",
-        "--jwtSecret=${workspaceFolder}/integration_test/nodes/jwt.hex"
+        "--jwtSecret=${workspaceFolder}/tests/testdata/jwt.hex"
       ]
     },
     {
@@ -35,7 +35,7 @@
         "--l2.auth=http://localhost:28551",
         "--taikoL1=0x95fF8D3CE9dcB7455BEB7845143bEA84Fe5C4F6f",
         "--taikoL2=0x1000777700000000000000000000000000000001",
-        "--jwtSecret=${workspaceFolder}/integration_test/nodes/jwt.hex",
+        "--jwtSecret=${workspaceFolder}/tests/testdata/jwt.hex",
         "--p2p.syncVerifiedBlocks",
         "--p2p.checkPointSyncUrl=https://rpc.jolnir.taiko.xyz"
       ]

@@ -9,14 +9,15 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
+
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	"github.com/taikoxyz/taiko-client/prover/server"
-	"github.com/taikoxyz/taiko-client/testutils"
-	"github.com/taikoxyz/taiko-client/testutils/helper"
+	"github.com/taikoxyz/taiko-client/tests"
+	"github.com/taikoxyz/taiko-client/tests/helper"
 )
 
 type ProverSelectorTestSuite struct {
-	testutils.ClientTestSuite
+	tests.ClientTestSuite
 	s               *ETHFeeEOASelector
 	proverAddress   common.Address
 	rpcClient       *rpc.Client
@@ -27,7 +28,7 @@ type ProverSelectorTestSuite struct {
 func (s *ProverSelectorTestSuite) SetupTest() {
 	s.ClientTestSuite.SetupTest()
 	s.rpcClient = helper.NewWsRpcClient(&s.ClientTestSuite)
-	s.proverAddress = crypto.PubkeyToAddress(testutils.ProverPrivKey.PublicKey)
+	s.proverAddress = crypto.PubkeyToAddress(tests.ProverPrivKey.PublicKey)
 	protocolConfigs, err := s.rpcClient.TaikoL1.GetConfig(nil)
 	s.Nil(err)
 	s.proverEndpoints, s.proverServer, err = helper.DefaultFakeProver(&s.ClientTestSuite, s.rpcClient)

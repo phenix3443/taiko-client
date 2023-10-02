@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/taikoxyz/taiko-client/testutils"
+
+	"github.com/taikoxyz/taiko-client/tests"
 )
 
 func TestParseSecretFromFile(t *testing.T) {
-	_, err := ParseSecretFromFile(testutils.JwtSecretFile)
+	_, err := ParseSecretFromFile(tests.JwtSecretFile)
 	require.Nil(t, err)
 
 	secret, err := ParseSecretFromFile("")

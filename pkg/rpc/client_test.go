@@ -7,11 +7,12 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/stretchr/testify/suite"
-	"github.com/taikoxyz/taiko-client/testutils"
+
+	"github.com/taikoxyz/taiko-client/tests"
 )
 
 type RpcTestSuite struct {
-	testutils.ClientTestSuite
+	tests.ClientTestSuite
 	cli *Client
 }
 
@@ -30,10 +31,10 @@ func (s *RpcTestSuite) newTestClient() *Client {
 		L1Endpoint:        s.L1.WsEndpoint(),
 		L2Endpoint:        s.L2.WsEndpoint(),
 		TaikoL1Address:    s.L1.TaikoL1Address,
-		TaikoL2Address:    testutils.TaikoL2Address,
+		TaikoL2Address:    tests.TaikoL2Address,
 		TaikoTokenAddress: s.L1.TaikoL1TokenAddress,
 		L2EngineEndpoint:  s.L2.AuthEndpoint(),
-		JwtSecret:         testutils.JwtSecretFile,
+		JwtSecret:         tests.JwtSecretFile,
 		RetryInterval:     backoff.DefaultMaxInterval,
 	})
 	s.NoError(err)
@@ -47,10 +48,10 @@ func (s *RpcTestSuite) newTestClientWithTimeout() *Client {
 		L1Endpoint:        s.L1.WsEndpoint(),
 		L2Endpoint:        s.L2.WsEndpoint(),
 		TaikoL1Address:    s.L1.TaikoL1Address,
-		TaikoL2Address:    testutils.TaikoL2Address,
+		TaikoL2Address:    tests.TaikoL2Address,
 		TaikoTokenAddress: s.L1.TaikoL1TokenAddress,
 		L2EngineEndpoint:  s.L2.AuthEndpoint(),
-		JwtSecret:         testutils.JwtSecretFile,
+		JwtSecret:         tests.JwtSecretFile,
 		RetryInterval:     backoff.DefaultMaxInterval,
 		Timeout:           &timeout,
 	})

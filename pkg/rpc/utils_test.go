@@ -8,7 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/taikoxyz/taiko-client/testutils"
+
+	"github.com/taikoxyz/taiko-client/tests"
 )
 
 func (s *RpcTestSuite) TestWaitReceiptTimeout() {
@@ -75,7 +76,7 @@ func (s *RpcTestSuite) TestL1ContentFrom() {
 	baseFee, err := s.cli.TaikoL2.GetBasefee(nil, 0, uint32(l2Head.GasUsed))
 	s.NoError(err)
 
-	testAddrPrivKey := testutils.ProposerPrivKey
+	testAddrPrivKey := tests.ProposerPrivKey
 
 	testAddr := crypto.PubkeyToAddress(testAddrPrivKey.PublicKey)
 

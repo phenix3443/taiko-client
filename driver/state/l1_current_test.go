@@ -5,7 +5,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/taikoxyz/taiko-client/testutils/helper"
+
+	"github.com/taikoxyz/taiko-client/tests/helper"
 )
 
 func (s *DriverStateTestSuite) TestGetL1Current() {

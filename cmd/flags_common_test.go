@@ -1,13 +1,13 @@
 package main
 
-import "github.com/taikoxyz/taiko-client/testutils"
+import "github.com/taikoxyz/taiko-client/tests"
 
-func commonTestArgs(s *testutils.ClientTestSuite) map[string]interface{} {
+func commonTestArgs(s *tests.ClientTestSuite) map[string]interface{} {
 	return map[string]interface{}{
 		// required Common flags
 		L1WSEndpointFlag.Name:   s.L1.WsEndpoint(),
 		TaikoL1AddressFlag.Name: s.L1.TaikoL1Address,
-		TaikoL2AddressFlag.Name: testutils.TaikoL2Address,
+		TaikoL2AddressFlag.Name: tests.TaikoL2Address,
 		// optional Common flags
 		VerbosityFlag.Name:          "0",
 		LogJsonFlag.Name:            "false",

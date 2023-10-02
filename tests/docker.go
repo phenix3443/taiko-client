@@ -1,4 +1,4 @@
-package testutils
+package tests
 
 import (
 	"bufio"
@@ -13,7 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/taikoxyz/taiko-client/testutils/docker"
+	"github.com/taikoxyz/taiko-client/tests/docker"
 )
 
 const (
@@ -108,7 +108,7 @@ func (e *gethContainer) deployTaikoL1() error {
 		fmt.Sprintf("L2_SIGNAL_SERVICE=%s", l2SignalService.Hex()),
 		fmt.Sprintf("SHARED_SIGNAL_SERVICE=%s", sharedSignalService.Hex()),
 		fmt.Sprintf("TAIKO_TOKEN_PREMINT_RECIPIENTS=%s,%s", ProposerAddress.Hex(), OracleProverAddress.Hex()),
-		fmt.Sprintf("TAIKO_TOKEN_PREMINT_AMOUNTS=%s,%s", premintTokenAmount, premintTokenAmount),
+		fmt.Sprintf("TAIKO_TOKEN_PREMINT_AMOUNTS=%s,%s", preMintTokenAmount, preMintTokenAmount),
 		fmt.Sprintf("L2_GENESIS_HASH=%s", l2GenesisHash),
 	}
 	cmd.Dir = monoPath + "/packages/protocol"

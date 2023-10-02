@@ -7,12 +7,13 @@ import (
 
 	"github.com/ethereum/go-ethereum/beacon/engine"
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/taikoxyz/taiko-client/pkg/jwt"
-	"github.com/taikoxyz/taiko-client/testutils"
+	"github.com/taikoxyz/taiko-client/tests"
 )
 
 func (s *RpcTestSuite) TestDialEngineClientWithBackoff() {
-	jwtSecret, err := jwt.ParseSecretFromFile(testutils.JwtSecretFile)
+	jwtSecret, err := jwt.ParseSecretFromFile(tests.JwtSecretFile)
 	s.NoError(err)
 	s.NotEmpty(jwtSecret)
 
@@ -65,7 +66,7 @@ func (s *RpcTestSuite) TestDialEngineClientWithBackoff_CtxError() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	jwtSecret, err := jwt.ParseSecretFromFile(testutils.JwtSecretFile)
+	jwtSecret, err := jwt.ParseSecretFromFile(tests.JwtSecretFile)
 	s.NoError(err)
 	s.NotEmpty(jwtSecret)
 

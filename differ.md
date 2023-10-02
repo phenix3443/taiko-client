@@ -10,3 +10,4 @@
 - [x] The unit test execution logic has been refactored with docker sdk, allowing unit tests to be executed in parallel, twice as fast as before.
 - [x] Optimize command line flag parsing based on flag.Destination and [flag.Action](https://cli.urfave.org/v2/examples/flags/#flag-actions), removing a lot of invalid copy code.
 - [ ] Remove over-engineered retry logic based on backoff package.
+- [ ] More readable code.

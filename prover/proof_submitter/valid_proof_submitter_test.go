@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
+
 	"github.com/taikoxyz/taiko-client/driver/chain_syncer/beaconsync"
 	"github.com/taikoxyz/taiko-client/driver/chain_syncer/calldata"
 	"github.com/taikoxyz/taiko-client/driver/state"
@@ -19,13 +20,13 @@ import (
 	"github.com/taikoxyz/taiko-client/proposer"
 	proofProducer "github.com/taikoxyz/taiko-client/prover/proof_producer"
 	"github.com/taikoxyz/taiko-client/prover/server"
-	"github.com/taikoxyz/taiko-client/testutils"
-	"github.com/taikoxyz/taiko-client/testutils/helper"
+	"github.com/taikoxyz/taiko-client/tests"
+	"github.com/taikoxyz/taiko-client/tests/helper"
 	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
 )
 
 type ProofSubmitterTestSuite struct {
-	testutils.ClientTestSuite
+	tests.ClientTestSuite
 	validProofSubmitter *ValidProofSubmitter
 	calldataSyncer      *calldata.Syncer
 	proposer            *proposer.Proposer
@@ -46,8 +47,8 @@ func (s *ProofSubmitterTestSuite) SetupTest() {
 		s.rpcClient,
 		&proofProducer.DummyProofProducer{},
 		s.validProofCh,
-		testutils.TaikoL2Address,
-		testutils.ProverPrivKey,
+		tests.TaikoL2Address,
+		tests.ProverPrivKey,
 		&sync.Mutex{},
 		false,
 		"test",
@@ -83,10 +84,10 @@ func (s *ProofSubmitterTestSuite) SetupTest() {
 		L1Endpoint:                         s.L1.WsEndpoint(),
 		L2Endpoint:                         s.L2.WsEndpoint(),
 		TaikoL1Address:                     s.L1.TaikoL1Address,
-		TaikoL2Address:                     testutils.TaikoL2Address,
+		TaikoL2Address:                     tests.TaikoL2Address,
 		TaikoTokenAddress:                  s.L1.TaikoL1TokenAddress,
-		L1ProposerPrivKey:                  testutils.ProposerPrivKey,
-		L2SuggestedFeeRecipient:            testutils.ProposerAddress,
+		L1ProposerPrivKey:                  tests.ProposerPrivKey,
+		L2SuggestedFeeRecipient:            tests.ProposerAddress,
 		ProposeInterval:                    &proposeInterval,
 		MaxProposedTxListsPerEpoch:         1,
 		WaitReceiptTimeout:                 10 * time.Second,

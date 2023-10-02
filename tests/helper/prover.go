@@ -12,11 +12,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/go-resty/resty/v2"
+
 	"github.com/taikoxyz/taiko-client/pkg/jwt"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	capacity "github.com/taikoxyz/taiko-client/prover/capacity_manager"
 	"github.com/taikoxyz/taiko-client/prover/server"
-	"github.com/taikoxyz/taiko-client/testutils"
+	"github.com/taikoxyz/taiko-client/tests"
 	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
 )
 
@@ -67,8 +68,8 @@ func NewFakeProver(
 	return srv, nil
 }
 
-func DefaultFakeProver(s *testutils.ClientTestSuite, rpcClient *rpc.Client) ([]*url.URL, *server.ProverServer, error) {
-	jwtSecret, err := jwt.ParseSecretFromFile(testutils.JwtSecretFile)
+func DefaultFakeProver(s *tests.ClientTestSuite, rpcClient *rpc.Client) ([]*url.URL, *server.ProverServer, error) {
+	jwtSecret, err := jwt.ParseSecretFromFile(tests.JwtSecretFile)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -78,7 +79,7 @@ func DefaultFakeProver(s *testutils.ClientTestSuite, rpcClient *rpc.Client) ([]*
 		return nil, nil, err
 	}
 	proverServer, err := NewFakeProver(s.L1.TaikoL1Address, &protocolConfigs, jwtSecret,
-		rpcClient, testutils.ProverPrivKey, capacity.New(1024, 100*time.Second), proverEndpoints[0])
+		rpcClient, tests.ProverPrivKey, capacity.New(1024, 100*time.Second), proverEndpoints[0])
 	if err != nil {
 		return nil, nil, err
 	}

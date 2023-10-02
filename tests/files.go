@@ -1,4 +1,4 @@
-package testutils
+package tests
 
 import (
 	"fmt"
@@ -54,7 +54,7 @@ func defaultJwtFilePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Abs(p + "taiko-client/testutils/testdata/jwt.hex")
+	return filepath.Abs(p + "taiko-client/tests/testdata/jwt.hex")
 }
 
 func initJwtSecret() (err error) {

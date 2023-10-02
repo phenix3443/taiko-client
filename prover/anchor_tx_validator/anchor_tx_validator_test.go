@@ -8,13 +8,14 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
+
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
-	"github.com/taikoxyz/taiko-client/testutils"
-	"github.com/taikoxyz/taiko-client/testutils/helper"
+	"github.com/taikoxyz/taiko-client/tests"
+	"github.com/taikoxyz/taiko-client/tests/helper"
 )
 
 type AnchorTxValidatorTestSuite struct {
-	testutils.ClientTestSuite
+	tests.ClientTestSuite
 	v         *AnchorTxValidator
 	rpcClient *rpc.Client
 }
@@ -22,7 +23,7 @@ type AnchorTxValidatorTestSuite struct {
 func (s *AnchorTxValidatorTestSuite) SetupTest() {
 	s.ClientTestSuite.SetupTest()
 	s.rpcClient = helper.NewWsRpcClient(&s.ClientTestSuite)
-	validator, err := New(testutils.TaikoL2Address, s.rpcClient.L2ChainID, s.rpcClient)
+	validator, err := New(tests.TaikoL2Address, s.rpcClient.L2ChainID, s.rpcClient)
 	s.Nil(err)
 	s.v = validator
 }

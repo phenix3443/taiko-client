@@ -11,7 +11,7 @@ import (
 )
 
 func TestZkevmCmdProducerOutputToCalldata(t *testing.T) {
-	output, err := os.ReadFile("../../testutils/testdata/block-5_proof.json")
+	output, err := os.ReadFile("../../tests/testdata/block-5_proof.json")
 	require.Nil(t, err)
 
 	var (

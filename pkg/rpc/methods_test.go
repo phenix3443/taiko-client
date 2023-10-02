@@ -6,13 +6,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/taikoxyz/taiko-client/testutils"
+
+	"github.com/taikoxyz/taiko-client/tests"
 )
 
 func (s *RpcTestSuite) TestL2AccountNonce() {
 	client := s.newTestClientWithTimeout()
 	defer client.Close()
-	nonce, err := client.L2AccountNonce(context.Background(), testutils.ProposerAddress, common.Big0)
+	nonce, err := client.L2AccountNonce(context.Background(), tests.ProposerAddress, common.Big0)
 
 	s.NoError(err)
 	s.Zero(nonce)

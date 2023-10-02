@@ -9,7 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/taikoxyz/taiko-client/testutils"
+
+	"github.com/taikoxyz/taiko-client/tests"
 	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
 )
 
@@ -28,12 +29,12 @@ func (s *ProofSubmitterTestSuite) TestIsSubmitProofTxErrorRetryable() {
 
 func (s *ProofSubmitterTestSuite) TestGetProveBlocksTxOpts() {
 	optsL1, err := getProveBlocksTxOpts(context.Background(),
-		s.rpcClient.L1, s.rpcClient.L1ChainID, testutils.ProposerPrivKey)
+		s.rpcClient.L1, s.rpcClient.L1ChainID, tests.ProposerPrivKey)
 	s.Nil(err)
 	s.Greater(optsL1.GasTipCap.Uint64(), uint64(0))
 
 	optsL2, err := getProveBlocksTxOpts(context.Background(),
-		s.rpcClient.L2, s.rpcClient.L2ChainID, testutils.ProposerPrivKey)
+		s.rpcClient.L2, s.rpcClient.L2ChainID, tests.ProposerPrivKey)
 	s.Nil(err)
 	s.Greater(optsL2.GasTipCap.Uint64(), uint64(0))
 }

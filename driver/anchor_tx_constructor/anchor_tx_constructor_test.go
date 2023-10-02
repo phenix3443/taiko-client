@@ -9,13 +9,14 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
+
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
-	"github.com/taikoxyz/taiko-client/testutils"
-	"github.com/taikoxyz/taiko-client/testutils/helper"
+	"github.com/taikoxyz/taiko-client/tests"
+	"github.com/taikoxyz/taiko-client/tests/helper"
 )
 
 type AnchorTxConstructorTestSuite struct {
-	testutils.ClientTestSuite
+	tests.ClientTestSuite
 	l1Height  *big.Int
 	l1Hash    common.Hash
 	c         *AnchorTxConstructor

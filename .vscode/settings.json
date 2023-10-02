@@ -1,10 +1,31 @@
 {
   "cSpell.words": [
+    "Automine",
+    "Basefee",
+    "Bytecodes",
+    "cenkalti",
+    "Cooldown",
+    "ethclient",
+    "gethclient",
+    "GOLDENTOUCHADDRESS",
+    "GOLDENTOUCHPRIVATEKEY",
+    "healthz",
+    "hexutil",
+    "Keccak",
+    "labstack",
+    "phayes",
+    "Pubkey",
+    "resty",
+    "Retryable",
     "RPCD",
     "stretchr",
+    "Syncer",
+    "Syncers",
     "taiko",
     "taikoxyz",
-    "testutils",
+    "tests",
+    "Trienode",
+    "Trienodes",
     "urfave",
     "wrongsecretfile"
   ],
@@ -24,6 +45,6 @@
     "L1_PROVER_PRIVATE_KEY": "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
     "TREASURY": "0xdf09A0afD09a63fb04ab3573922437e1e637dE8b",
     "PREMINT_TOKEN_AMOUNT": "92233720368547758070000000000000",
-    "JWT_SECRET": "integration_test/nodes/jwt.hex"
+    "JWT_SECRET": "tests/testdata/jwt.hex"
   }
 }

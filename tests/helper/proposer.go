@@ -11,12 +11,13 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/taikoxyz/taiko-client/testutils"
+
+	"github.com/taikoxyz/taiko-client/tests"
 	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
 	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings/encoding"
 )
 
-func ProposeInvalidTxListBytes(s *testutils.ClientTestSuite, proposer testutils.Proposer) {
+func ProposeInvalidTxListBytes(s *tests.ClientTestSuite, proposer tests.Proposer) {
 	invalidTxListBytes := RandomBytes(256)
 
 	s.Nil(proposer.ProposeTxList(context.Background(), &encoding.TaikoL1BlockMetadataInput{
@@ -29,9 +30,9 @@ func ProposeInvalidTxListBytes(s *testutils.ClientTestSuite, proposer testutils.
 }
 
 func ProposeAndInsertEmptyBlocks(
-	s *testutils.ClientTestSuite,
-	proposer testutils.Proposer,
-	calldataSyncer testutils.CalldataSyncer,
+	s *tests.ClientTestSuite,
+	proposer tests.Proposer,
+	calldataSyncer tests.CalldataSyncer,
 ) []*bindings.TaikoL1ClientBlockProposed {
 	var events []*bindings.TaikoL1ClientBlockProposed
 	rpcClient := NewWsRpcClient(s)
@@ -90,9 +91,9 @@ func ProposeAndInsertEmptyBlocks(
 // ProposeAndInsertValidBlock proposes an valid tx list and then insert it
 // into L2 execution engine's local chain.
 func ProposeAndInsertValidBlock(
-	s *testutils.ClientTestSuite,
-	proposer testutils.Proposer,
-	calldataSyncer testutils.CalldataSyncer,
+	s *tests.ClientTestSuite,
+	proposer tests.Proposer,
+	calldataSyncer tests.CalldataSyncer,
 ) *bindings.TaikoL1ClientBlockProposed {
 	rpcClient := NewWsRpcClient(s)
 	defer rpcClient.Close()
@@ -115,7 +116,7 @@ func ProposeAndInsertValidBlock(
 	baseFee, err := rpcClient.TaikoL2.GetBasefee(nil, 0, uint32(l2Head.GasUsed))
 	s.Nil(err)
 
-	nonce, err := rpcClient.L2.PendingNonceAt(context.Background(), testutils.ProposerAddress)
+	nonce, err := rpcClient.L2.PendingNonceAt(context.Background(), tests.ProposerAddress)
 	s.Nil(err)
 
 	tx := types.NewTransaction(
@@ -126,7 +127,7 @@ func ProposeAndInsertValidBlock(
 		baseFee,
 		[]byte{},
 	)
-	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(rpcClient.L2ChainID), testutils.ProposerPrivKey)
+	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(rpcClient.L2ChainID), tests.ProposerPrivKey)
 	s.Nil(err)
 	s.Nil(rpcClient.L2.SendTransaction(context.Background(), signedTx))
 
@@ -160,13 +161,13 @@ func ProposeAndInsertValidBlock(
 	return event
 }
 
-func DepositEtherToL2(s *testutils.ClientTestSuite, depositerPrivKey *ecdsa.PrivateKey, recipient common.Address) {
+func DepositEtherToL2(s *tests.ClientTestSuite, depositorPrivKey *ecdsa.PrivateKey, recipient common.Address) {
 	rpcClient := NewWsRpcClient(s)
 	defer rpcClient.Close()
 	config, err := rpcClient.TaikoL1.GetConfig(nil)
 	s.Nil(err)
 
-	opts, err := bind.NewKeyedTransactorWithChainID(depositerPrivKey, rpcClient.L1ChainID)
+	opts, err := bind.NewKeyedTransactorWithChainID(depositorPrivKey, rpcClient.L1ChainID)
 	s.Nil(err)
 	opts.Value = config.EthDepositMinAmount
 
