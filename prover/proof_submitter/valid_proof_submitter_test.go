@@ -13,9 +13,9 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/taikoxyz/taiko-client/driver/chain_syncer/beaconsync"
-	"github.com/taikoxyz/taiko-client/driver/chain_syncer/calldata"
 	"github.com/taikoxyz/taiko-client/driver/state"
+	"github.com/taikoxyz/taiko-client/driver/syncer/beacon"
+	"github.com/taikoxyz/taiko-client/driver/syncer/calldata"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	"github.com/taikoxyz/taiko-client/proposer"
 	proofProducer "github.com/taikoxyz/taiko-client/prover/proof_producer"
@@ -65,7 +65,7 @@ func (s *ProofSubmitterTestSuite) SetupTest() {
 	testState, err := state.New(context.Background(), s.rpcClient)
 	s.Nil(err)
 
-	tracker := beaconsync.NewSyncProgressTracker(s.rpcClient.L2, 30*time.Second)
+	tracker := beacon.NewSyncProgressTracker(s.rpcClient.L2, 30*time.Second)
 
 	s.calldataSyncer, err = calldata.NewSyncer(
 		context.Background(),

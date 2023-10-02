@@ -1,4 +1,4 @@
-package chainSyncer
+package syncer
 
 import (
 	"context"
@@ -8,9 +8,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/taikoxyz/taiko-client/driver/chain_syncer/beaconsync"
-	"github.com/taikoxyz/taiko-client/driver/chain_syncer/calldata"
+
 	"github.com/taikoxyz/taiko-client/driver/state"
+	"github.com/taikoxyz/taiko-client/driver/syncer/beacon"
+	"github.com/taikoxyz/taiko-client/driver/syncer/calldata"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 )
 
@@ -22,11 +23,11 @@ type L2ChainSyncer struct {
 	rpc   *rpc.Client  // L1/L2 RPC clients
 
 	// Syncers
-	beaconSyncer   *beaconsync.Syncer
+	beaconSyncer   *beacon.Syncer
 	calldataSyncer *calldata.Syncer
 
 	// Monitors
-	progressTracker *beaconsync.SyncProgressTracker
+	progressTracker *beacon.SyncProgressTracker
 
 	// If this flag is activated, will try P2P beacon sync if current node is behind of the protocol's
 	// latest verified block head
@@ -42,10 +43,10 @@ func New(
 	p2pSyncTimeout time.Duration,
 	signalServiceAddress common.Address,
 ) (*L2ChainSyncer, error) {
-	tracker := beaconsync.NewSyncProgressTracker(rpc.L2, p2pSyncTimeout)
+	tracker := beacon.NewSyncProgressTracker(rpc.L2, p2pSyncTimeout)
 	go tracker.Track(ctx)
 
-	beaconSyncer := beaconsync.NewSyncer(ctx, rpc, state, tracker)
+	beaconSyncer := beacon.NewSyncer(ctx, rpc, state, tracker)
 	calldataSyncer, err := calldata.NewSyncer(ctx, rpc, state, tracker, signalServiceAddress)
 	if err != nil {
 		return nil, err
@@ -156,7 +157,7 @@ func (s *L2ChainSyncer) needNewBeaconSyncTriggered() bool {
 }
 
 // BeaconSyncer returns the inner beacon syncer.
-func (s *L2ChainSyncer) BeaconSyncer() *beaconsync.Syncer {
+func (s *L2ChainSyncer) BeaconSyncer() *beacon.Syncer {
 	return s.beaconSyncer
 }
 

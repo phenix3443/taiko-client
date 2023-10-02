@@ -1,4 +1,4 @@
-package tx_list_validator
+package transaction
 
 import (
 	"crypto/rand"

@@ -14,18 +14,19 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rlp"
-	anchorTxConstructor "github.com/taikoxyz/taiko-client/driver/anchor_tx_constructor"
-	"github.com/taikoxyz/taiko-client/driver/chain_syncer/beaconsync"
+
+	"github.com/taikoxyz/taiko-client/driver/anchor"
 	"github.com/taikoxyz/taiko-client/driver/state"
+	"github.com/taikoxyz/taiko-client/driver/syncer/beacon"
 	"github.com/taikoxyz/taiko-client/metrics"
 	eventIterator "github.com/taikoxyz/taiko-client/pkg/chain_iterator/event_iterator"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
-	txListValidator "github.com/taikoxyz/taiko-client/pkg/tx_list_validator"
+	"github.com/taikoxyz/taiko-client/pkg/transaction"
 	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
 	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings/encoding"
 )
 
-// Brecht recommends to hardcore 79, may be unrequired as proof system changes
+// Brecht recommends to hardcore 79, may be not required as proof system changes
 var defaultMaxTxPerBlock = uint64(79)
 
 // Syncer responsible for letting the L2 execution engine catching up with protocol's latest
@@ -34,9 +35,9 @@ type Syncer struct {
 	ctx               context.Context
 	rpc               *rpc.Client
 	state             *state.State
-	progressTracker   *beaconsync.SyncProgressTracker          // Sync progress tracker
-	anchorConstructor *anchorTxConstructor.AnchorTxConstructor // TaikoL2.anchor transactions constructor
-	txListValidator   *txListValidator.TxListValidator         // Transactions list validator
+	progressTracker   *beacon.SyncProgressTracker  // Sync progress tracker
+	anchorConstructor *anchor.Anchor               // TaikoL2.anchor transactions constructor
+	txListValidator   *transaction.TxListValidator // Transactions list validator
 	// Used by BlockInserter
 	lastInsertedBlockID *big.Int
 	reorgDetectedFlag   bool
@@ -47,7 +48,7 @@ func NewSyncer(
 	ctx context.Context,
 	rpc *rpc.Client,
 	state *state.State,
-	progressTracker *beaconsync.SyncProgressTracker,
+	progressTracker *beacon.SyncProgressTracker,
 	signalServiceAddress common.Address,
 ) (*Syncer, error) {
 	configs, err := rpc.TaikoL1.GetConfig(&bind.CallOpts{Context: ctx})
@@ -55,7 +56,7 @@ func NewSyncer(
 		return nil, fmt.Errorf("failed to get protocol configs: %w", err)
 	}
 
-	constructor, err := anchorTxConstructor.New(rpc, signalServiceAddress)
+	constructor, err := anchor.New(rpc, signalServiceAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize anchor constructor: %w", err)
 	}
@@ -66,7 +67,7 @@ func NewSyncer(
 		state:             state,
 		progressTracker:   progressTracker,
 		anchorConstructor: constructor,
-		txListValidator: txListValidator.NewTxListValidator(
+		txListValidator: transaction.NewTxListValidator(
 			uint64(configs.BlockMaxGasLimit),
 			defaultMaxTxPerBlock,
 			configs.BlockMaxTxListBytes.Uint64(),
@@ -260,7 +261,7 @@ func (s *Syncer) onBlockProposed(
 	}
 
 	// If the transactions list is invalid, we simply insert an empty L2 block.
-	if hint != txListValidator.HintOK {
+	if hint != transaction.HintOK {
 		log.Info("Invalid transactions list, insert an empty L2 block instead", "blockID", event.BlockId)
 		txListBytes = []byte{}
 	}
@@ -357,7 +358,7 @@ func (s *Syncer) insertNewHead(
 	}
 
 	// Assemble a TaikoL2.anchor transaction
-	anchorTx, err := s.anchorConstructor.AssembleAnchorTx(
+	anchorTx, err := s.anchorConstructor.Assemble(
 		ctx,
 		new(big.Int).SetUint64(event.Meta.L1Height),
 		event.Meta.L1Hash,

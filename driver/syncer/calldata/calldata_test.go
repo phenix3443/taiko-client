@@ -11,8 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/stretchr/testify/suite"
-	"github.com/taikoxyz/taiko-client/driver/chain_syncer/beaconsync"
 	"github.com/taikoxyz/taiko-client/driver/state"
+	"github.com/taikoxyz/taiko-client/driver/syncer/beacon"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	"github.com/taikoxyz/taiko-client/proposer"
 	"github.com/taikoxyz/taiko-client/prover/server"
@@ -40,7 +40,7 @@ func (s *CalldataSyncerTestSuite) SetupTest() {
 		context.Background(),
 		s.rpcClient,
 		state,
-		beaconsync.NewSyncProgressTracker(s.rpcClient.L2, 1*time.Hour),
+		beacon.NewSyncProgressTracker(s.rpcClient.L2, 1*time.Hour),
 		s.L1.TaikoL1SignalService,
 	)
 	s.NoError(err)

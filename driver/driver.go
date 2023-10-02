@@ -13,8 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/log"
-	chainSyncer "github.com/taikoxyz/taiko-client/driver/chain_syncer"
 	"github.com/taikoxyz/taiko-client/driver/state"
+	chainSyncer "github.com/taikoxyz/taiko-client/driver/syncer"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 )
 
@@ -164,7 +164,7 @@ func (d *Driver) ChainSyncer() *chainSyncer.L2ChainSyncer {
 	return d.l2ChainSyncer
 }
 
-// reportProtocolStatus reports some protocol status intervally.
+// reportProtocolStatus reports some protocol status periodically.
 func (d *Driver) reportProtocolStatus() {
 	ticker := time.NewTicker(protocolStatusReportInterval)
 	defer func() {

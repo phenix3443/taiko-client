@@ -1,4 +1,4 @@
-package beaconsync
+package beacon
 
 import (
 	"context"
@@ -12,9 +12,7 @@ import (
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 )
 
-var (
-	syncProgressCheckInterval = 10 * time.Second
-)
+var syncProgressCheckInterval = 10 * time.Second
 
 // SyncProgressTracker is responsible for tracking the L2 execution engine's sync progress, after
 // a beacon sync is triggered in it, and check whether the L2 execution is not able to sync through P2P (due to no

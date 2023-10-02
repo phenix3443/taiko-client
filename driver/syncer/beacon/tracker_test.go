@@ -1,4 +1,4 @@
-package beaconsync
+package beacon
 
 import (
 	"context"

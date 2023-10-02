@@ -1,4 +1,4 @@
-package anchorTxConstructor
+package anchor
 
 import (
 	"context"
@@ -19,9 +19,9 @@ const (
 	anchorGasCost = 180000
 )
 
-// AnchorTxConstructor is responsible for assembling the anchor transaction (TaikoL2.anchor) in
+// Anchor is responsible for assembling the anchor transaction (TaikoL2.anchor) in
 // each L2 block, which is always the first transaction.
-type AnchorTxConstructor struct {
+type Anchor struct {
 	rpc                  *rpc.Client
 	gasLimit             uint64
 	goldenTouchAddress   common.Address
@@ -30,7 +30,7 @@ type AnchorTxConstructor struct {
 }
 
 // New creates a new AnchorConstructor instance.
-func New(rpc *rpc.Client, signalServiceAddress common.Address) (*AnchorTxConstructor, error) {
+func New(rpc *rpc.Client, signalServiceAddress common.Address) (*Anchor, error) {
 	goldenTouchAddress, err := rpc.TaikoL2.GOLDENTOUCHADDRESS(nil)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func New(rpc *rpc.Client, signalServiceAddress common.Address) (*AnchorTxConstru
 		return nil, fmt.Errorf("invalid golden touch private key %s", goldenTouchPrivKey)
 	}
 
-	return &AnchorTxConstructor{
+	return &Anchor{
 		rpc:                  rpc,
 		gasLimit:             anchorGasCost,
 		goldenTouchAddress:   goldenTouchAddress,
@@ -55,8 +55,8 @@ func New(rpc *rpc.Client, signalServiceAddress common.Address) (*AnchorTxConstru
 	}, nil
 }
 
-// AssembleAnchorTx assembles a signed TaikoL2.anchor transaction.
-func (c *AnchorTxConstructor) AssembleAnchorTx(
+// Assemble assembles a signed TaikoL2.anchor transaction.
+func (c *Anchor) Assemble(
 	ctx context.Context,
 	// Parameters of the TaikoL2.anchor transaction.
 	l1Height *big.Int,
@@ -89,7 +89,7 @@ func (c *AnchorTxConstructor) AssembleAnchorTx(
 
 // transactOpts is a utility method to create some transact options of the anchor transaction in given L2 block with
 // golden touch account's private key.
-func (c *AnchorTxConstructor) transactOpts(
+func (c *Anchor) transactOpts(
 	ctx context.Context,
 	l2Height *big.Int,
 	baseFee *big.Int,
@@ -127,7 +127,7 @@ func (c *AnchorTxConstructor) transactOpts(
 
 // signTxPayload calculates an ECDSA signature for an anchor transaction.
 // ref: https://github.com/taikoxyz/taiko-mono/blob/main/packages/protocol/contracts/libs/LibAnchorSignature.sol
-func (c *AnchorTxConstructor) signTxPayload(hash []byte) ([]byte, error) {
+func (c *Anchor) signTxPayload(hash []byte) ([]byte, error) {
 	if len(hash) != 32 {
 		return nil, fmt.Errorf("hash is required to be exactly 32 bytes (%d)", len(hash))
 	}
@@ -146,6 +146,6 @@ func (c *AnchorTxConstructor) signTxPayload(hash []byte) ([]byte, error) {
 }
 
 // GasLimit returns protocol's anchorTxGasLimit constant.
-func (c *AnchorTxConstructor) GasLimit() uint64 {
+func (c *Anchor) GasLimit() uint64 {
 	return c.gasLimit
 }

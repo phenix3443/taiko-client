@@ -1,4 +1,4 @@
-package chainSyncer
+package syncer
 
 import (
 	"context"
