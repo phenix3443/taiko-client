@@ -3,51 +3,52 @@ package prover
 import (
 	"context"
 	"net/url"
-	"os"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 	"github.com/taikoxyz/taiko-client/bindings"
 	"github.com/taikoxyz/taiko-client/driver"
 	"github.com/taikoxyz/taiko-client/pkg/jwt"
+	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	"github.com/taikoxyz/taiko-client/proposer"
+
 	producer "github.com/taikoxyz/taiko-client/prover/proof_producer"
 	"github.com/taikoxyz/taiko-client/testutils"
+	"github.com/taikoxyz/taiko-client/testutils/helper"
 )
 
 type ProverTestSuite struct {
 	testutils.ClientTestSuite
-	p        *Prover
-	cancel   context.CancelFunc
-	d        *driver.Driver
-	proposer *proposer.Proposer
+	p         *Prover
+	cancel    context.CancelFunc
+	d         *driver.Driver
+	rpcClient *rpc.Client
+	proposer  *proposer.Proposer
 }
 
 func (s *ProverTestSuite) SetupTest() {
 	s.ClientTestSuite.SetupTest()
 
 	// Init prover
-	l1ProverPrivKey, err := crypto.ToECDSA(common.Hex2Bytes(os.Getenv("L1_PROVER_PRIVATE_KEY")))
-	s.Nil(err)
+	l1ProverPrivKey := testutils.ProverPrivKey
 
-	proverServerUrl := testutils.LocalRandomProverEndpoint()
+	proverServerUrl := helper.LocalRandomProverEndpoint()
 	port, err := strconv.Atoi(proverServerUrl.Port())
-	s.Nil(err)
+	s.NoError(err)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	p := new(Prover)
-	s.Nil(InitFromConfig(ctx, p, (&Config{
-		L1WsEndpoint:                    os.Getenv("L1_NODE_WS_ENDPOINT"),
-		L1HttpEndpoint:                  os.Getenv("L1_NODE_HTTP_ENDPOINT"),
-		L2WsEndpoint:                    os.Getenv("L2_EXECUTION_ENGINE_WS_ENDPOINT"),
-		L2HttpEndpoint:                  os.Getenv("L2_EXECUTION_ENGINE_HTTP_ENDPOINT"),
-		TaikoL1Address:                  common.HexToAddress(os.Getenv("TAIKO_L1_ADDRESS")),
-		TaikoL2Address:                  common.HexToAddress(os.Getenv("TAIKO_L2_ADDRESS")),
+
+	cfg := &Config{
+		L1WsEndpoint:                    s.L1.WsEndpoint(),
+		L1HttpEndpoint:                  s.L1.HttpEndpoint(),
+		L2WsEndpoint:                    s.L2.WsEndpoint(),
+		L2HttpEndpoint:                  s.L2.HttpEndpoint(),
+		TaikoL1Address:                  s.L1.TaikoL1Address,
+		TaikoL2Address:                  testutils.TaikoL2Address,
 		L1ProverPrivKey:                 l1ProverPrivKey,
 		OracleProverPrivateKey:          l1ProverPrivKey,
 		OracleProver:                    false,
@@ -58,101 +59,82 @@ func (s *ProverTestSuite) SetupTest() {
 		Capacity:                        1024,
 		MinProofFee:                     common.Big1,
 		HTTPServerPort:                  uint64(port),
-	})))
-	p.srv = testutils.NewTestProverServer(
-		&s.ClientTestSuite,
-		l1ProverPrivKey,
-		p.capacityManager,
-		proverServerUrl,
-	)
-	s.p = p
+	}
+	s.p, err = New(ctx, cfg)
+	s.NoError(err)
+	jwtSecret, err := jwt.ParseSecretFromFile(testutils.JwtSecretFile)
+	s.NoError(err)
+	s.NotEmpty(jwtSecret)
+	s.rpcClient = helper.NewWsRpcClient(&s.ClientTestSuite)
+	protocolConfigs, err := s.rpcClient.TaikoL1.GetConfig(nil)
+	s.NoError(err)
+	s.p.srv, err = helper.NewFakeProver(s.L1.TaikoL1Address, &protocolConfigs, jwtSecret,
+		s.rpcClient, l1ProverPrivKey, s.p.capacityManager, proverServerUrl)
+	s.NoError(err)
 	s.cancel = cancel
 
 	// Init driver
-	jwtSecret, err := jwt.ParseSecretFromFile(os.Getenv("JWT_SECRET"))
-	s.Nil(err)
-	s.NotEmpty(jwtSecret)
 
-	d := new(driver.Driver)
-	s.Nil(driver.InitFromConfig(context.Background(), d, &driver.Config{
-		L1Endpoint:       os.Getenv("L1_NODE_WS_ENDPOINT"),
-		L2Endpoint:       os.Getenv("L2_EXECUTION_ENGINE_WS_ENDPOINT"),
-		L2EngineEndpoint: os.Getenv("L2_EXECUTION_ENGINE_AUTH_ENDPOINT"),
-		TaikoL1Address:   common.HexToAddress(os.Getenv("TAIKO_L1_ADDRESS")),
-		TaikoL2Address:   common.HexToAddress(os.Getenv("TAIKO_L2_ADDRESS")),
+	dCfg := &driver.Config{
+		L1Endpoint:       s.L1.WsEndpoint(),
+		L2Endpoint:       s.L2.WsEndpoint(),
+		L2EngineEndpoint: s.L2.AuthEndpoint(),
+		TaikoL1Address:   s.L1.TaikoL1Address,
+		TaikoL2Address:   testutils.TaikoL2Address,
 		JwtSecret:        string(jwtSecret),
-	}))
-	s.d = d
+	}
+	s.d, err = driver.New(ctx, dCfg)
+	s.NoError(err)
 
 	// Init proposer
-	l1ProposerPrivKey, err := crypto.ToECDSA(common.Hex2Bytes(os.Getenv("L1_PROPOSER_PRIVATE_KEY")))
+	l1ProposerPrivKey := testutils.ProposerPrivKey
 	s.Nil(err)
 
-	prop := new(proposer.Proposer)
-
 	proposeInterval := 1024 * time.Hour // No need to periodically propose transactions list in unit tests
-	s.Nil(proposer.InitFromConfig(context.Background(), prop, (&proposer.Config{
-		L1Endpoint:                         os.Getenv("L1_NODE_WS_ENDPOINT"),
-		L2Endpoint:                         os.Getenv("L2_EXECUTION_ENGINE_WS_ENDPOINT"),
-		TaikoL1Address:                     common.HexToAddress(os.Getenv("TAIKO_L1_ADDRESS")),
-		TaikoL2Address:                     common.HexToAddress(os.Getenv("TAIKO_L2_ADDRESS")),
-		TaikoTokenAddress:                  common.HexToAddress(os.Getenv("TAIKO_TOKEN_ADDRESS")),
+	pCfg := &proposer.Config{
+		L1Endpoint:                         s.L1.WsEndpoint(),
+		L2Endpoint:                         s.L2.WsEndpoint(),
+		TaikoL1Address:                     s.L1.TaikoL1Address,
+		TaikoL2Address:                     testutils.TaikoL2Address,
+		TaikoTokenAddress:                  s.L1.TaikoL1TokenAddress,
 		L1ProposerPrivKey:                  l1ProposerPrivKey,
-		L2SuggestedFeeRecipient:            common.HexToAddress(os.Getenv("L2_SUGGESTED_FEE_RECIPIENT")),
+		L2SuggestedFeeRecipient:            testutils.ProposerAddress,
 		ProposeInterval:                    &proposeInterval,
 		MaxProposedTxListsPerEpoch:         1,
 		WaitReceiptTimeout:                 10 * time.Second,
 		ProverEndpoints:                    []*url.URL{proverServerUrl},
 		BlockProposalFee:                   common.Big256,
 		BlockProposalFeeIterations:         3,
-		BlockProposalFeeIncreasePercentage: common.Big2,
-	})))
+		BlockProposalFeeIncreasePercentage: 2,
+	}
+	s.proposer, err = proposer.New(context.Background(), pCfg)
+	s.NoError(err)
+}
 
-	s.proposer = prop
+func (s *ProverTestSuite) TearDownTest() {
+	s.proposer.Close(context.Background())
+	s.d.Close(context.Background())
+	s.p.Close(context.Background())
+	s.rpcClient.Close()
+	s.ClientTestSuite.TearDownTest()
 }
 
 func (s *ProverTestSuite) TestName() {
 	s.Equal("prover", s.p.Name())
 }
 
-func (s *ProverTestSuite) TestInitError() {
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	l1ProverPrivKey, err := crypto.ToECDSA(common.Hex2Bytes(os.Getenv("L1_PROVER_PRIVATE_KEY")))
-	s.Nil(err)
-
-	p := new(Prover)
-	// Error should be "context canceled", instead is "Dial ethclient error:"
-	s.ErrorContains(InitFromConfig(ctx, p, (&Config{
-		L1WsEndpoint:                      os.Getenv("L1_NODE_WS_ENDPOINT"),
-		L1HttpEndpoint:                    os.Getenv("L1_NODE_HTTP_ENDPOINT"),
-		L2WsEndpoint:                      os.Getenv("L2_EXECUTION_ENGINE_WS_ENDPOINT"),
-		L2HttpEndpoint:                    os.Getenv("L2_EXECUTION_ENGINE_HTTP_ENDPOINT"),
-		TaikoL1Address:                    common.HexToAddress(os.Getenv("TAIKO_L1_ADDRESS")),
-		TaikoL2Address:                    common.HexToAddress(os.Getenv("TAIKO_L2_ADDRESS")),
-		L1ProverPrivKey:                   l1ProverPrivKey,
-		OracleProverPrivateKey:            l1ProverPrivKey,
-		Dummy:                             true,
-		MaxConcurrentProvingJobs:          1,
-		CheckProofWindowExpiredInterval:   5 * time.Second,
-		ProveUnassignedBlocks:             true,
-		ProveBlockTxReplacementMultiplier: 2,
-	})), "dial tcp:")
-}
-
 func (s *ProverTestSuite) TestOnBlockProposed() {
 	s.p.cfg.OracleProver = true
 	// Init prover
-	l1ProverPrivKey, err := crypto.ToECDSA(common.Hex2Bytes(os.Getenv("L1_PROVER_PRIVATE_KEY")))
-	s.Nil(err)
+	l1ProverPrivKey := testutils.ProverPrivKey
 	s.p.cfg.OracleProverPrivateKey = l1ProverPrivKey
 	// Valid block
-	e := testutils.ProposeAndInsertValidBlock(&s.ClientTestSuite, s.proposer, s.d.ChainSyncer().CalldataSyncer())
+	e := helper.ProposeAndInsertValidBlock(&s.ClientTestSuite, s.proposer, s.d.ChainSyncer().CalldataSyncer())
 	s.Nil(s.p.onBlockProposed(context.Background(), e, func() {}))
 	s.Nil(s.p.validProofSubmitter.SubmitProof(context.Background(), <-s.p.proofGenerationCh))
 
 	// Empty blocks
-	for _, e = range testutils.ProposeAndInsertEmptyBlocks(
+	for _, e = range helper.ProposeAndInsertEmptyBlocks(
 		&s.ClientTestSuite,
 		s.proposer,
 		s.d.ChainSyncer().CalldataSyncer(),
@@ -166,7 +148,8 @@ func (s *ProverTestSuite) TestOnBlockProposed() {
 func (s *ProverTestSuite) TestOnBlockVerifiedEmptyBlockHash() {
 	s.Nil(s.p.onBlockVerified(context.Background(), &bindings.TaikoL1ClientBlockVerified{
 		BlockId:   common.Big1,
-		BlockHash: common.Hash{}},
+		BlockHash: common.Hash{},
+	},
 	))
 }
 

@@ -16,7 +16,6 @@ import (
 	chainSyncer "github.com/taikoxyz/taiko-client/driver/chain_syncer"
 	"github.com/taikoxyz/taiko-client/driver/state"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
-	"github.com/urfave/cli/v2"
 )
 
 const (
@@ -40,47 +39,25 @@ type Driver struct {
 	wg                   sync.WaitGroup
 }
 
-// New initializes the given driver instance based on the command line flags.
-func (d *Driver) InitFromCli(ctx context.Context, c *cli.Context) error {
-	cfg, err := NewConfigFromCliContext(c)
-	if err != nil {
-		return err
-	}
-
-	return InitFromConfig(ctx, d, cfg)
-}
-
-// InitFromConfig initializes the driver instance based on the given configurations.
-func InitFromConfig(ctx context.Context, d *Driver, cfg *Config) (err error) {
+// New initializes the driver instance based on the given configurations.
+func New(ctx context.Context, cfg *Config) (d *Driver, err error) {
+	d = &Driver{}
 	d.l1HeadCh = make(chan *types.Header, 1024)
 	d.wg = sync.WaitGroup{}
 	d.syncNotify = make(chan struct{}, 1)
 	d.ctx = ctx
 	d.backOffRetryInterval = cfg.BackOffRetryInterval
 
-	if d.rpc, err = rpc.NewClient(d.ctx, &rpc.ClientConfig{
-		L1Endpoint:       cfg.L1Endpoint,
-		L2Endpoint:       cfg.L2Endpoint,
-		L2CheckPoint:     cfg.L2CheckPoint,
-		TaikoL1Address:   cfg.TaikoL1Address,
-		TaikoL2Address:   cfg.TaikoL2Address,
-		L2EngineEndpoint: cfg.L2EngineEndpoint,
-		JwtSecret:        cfg.JwtSecret,
-		RetryInterval:    cfg.BackOffRetryInterval,
-		Timeout:          cfg.RPCTimeout,
-	}); err != nil {
-		return err
+	if d.rpc, err = EndpointFromConfig(ctx, cfg); err != nil {
+		return nil, err
 	}
-
 	if d.state, err = state.New(d.ctx, d.rpc); err != nil {
-		return err
+		return nil, err
 	}
-
-	peers, err := d.rpc.L2.PeerCount(d.ctx)
+	peers, err := d.rpc.L2.PeerCount(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
 	if cfg.P2PSyncVerifiedBlocks && peers == 0 {
 		log.Warn("P2P syncing verified blocks enabled, but no connected peer found in L2 execution engine")
 	}
@@ -91,7 +68,7 @@ func InitFromConfig(ctx context.Context, d *Driver, cfg *Config) (err error) {
 		false,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if d.l2ChainSyncer, err = chainSyncer.New(
@@ -102,12 +79,12 @@ func InitFromConfig(ctx context.Context, d *Driver, cfg *Config) (err error) {
 		cfg.P2PSyncTimeout,
 		signalServiceAddress,
 	); err != nil {
-		return err
+		return nil, err
 	}
 
 	d.l1HeadSub = d.state.SubL1HeadsFeed(d.l1HeadCh)
 
-	return nil
+	return d, nil
 }
 
 // Start starts the driver instance.
@@ -124,6 +101,7 @@ func (d *Driver) Start() error {
 func (d *Driver) Close(ctx context.Context) {
 	d.state.Close()
 	d.wg.Wait()
+	d.rpc.Close()
 }
 
 // eventLoop starts the main loop of a L2 execution engine's driver.
@@ -272,4 +250,19 @@ func (d *Driver) exchangeTransitionConfigLoop() {
 // Name returns the application name.
 func (d *Driver) Name() string {
 	return "driver"
+}
+
+// EndpointFromConfig generates an RPC client from the given configuration.
+func EndpointFromConfig(ctx context.Context, cfg *Config) (*rpc.Client, error) {
+	return rpc.NewClient(ctx, &rpc.ClientConfig{
+		L1Endpoint:       cfg.L1Endpoint,
+		L2Endpoint:       cfg.L2Endpoint,
+		L2CheckPoint:     cfg.L2CheckPoint,
+		TaikoL1Address:   cfg.TaikoL1Address,
+		TaikoL2Address:   cfg.TaikoL2Address,
+		L2EngineEndpoint: cfg.L2EngineEndpoint,
+		JwtSecret:        cfg.JwtSecret,
+		RetryInterval:    cfg.BackOffRetryInterval,
+		Timeout:          cfg.RPCTimeout,
+	})
 }

@@ -27,12 +27,9 @@ import (
 	proofProducer "github.com/taikoxyz/taiko-client/prover/proof_producer"
 	proofSubmitter "github.com/taikoxyz/taiko-client/prover/proof_submitter"
 	"github.com/taikoxyz/taiko-client/prover/server"
-	"github.com/urfave/cli/v2"
 )
 
-var (
-	errNoCapacity = errors.New("no prover capacity available")
-)
+var errNoCapacity = errors.New("no prover capacity available")
 
 type cancelFunc func()
 
@@ -94,18 +91,9 @@ type Prover struct {
 	wg  sync.WaitGroup
 }
 
-// New initializes the given prover instance based on the command line flags.
-func (p *Prover) InitFromCli(ctx context.Context, c *cli.Context) error {
-	cfg, err := NewConfigFromCliContext(c)
-	if err != nil {
-		return err
-	}
-
-	return InitFromConfig(ctx, p, cfg)
-}
-
-// InitFromConfig initializes the prover instance based on the given configurations.
-func InitFromConfig(ctx context.Context, p *Prover, cfg *Config) (err error) {
+// New initializes the prover instance based on the given configurations.
+func New(ctx context.Context, cfg *Config) (p *Prover, err error) {
+	p = &Prover{}
 	p.cfg = cfg
 	p.ctx = ctx
 	p.currentBlocksBeingProven = make(map[uint64]cancelFunc)
@@ -114,24 +102,14 @@ func InitFromConfig(ctx context.Context, p *Prover, cfg *Config) (err error) {
 	p.currentBlocksWaitingForProofWindowMutex = new(sync.Mutex)
 	p.capacityManager = capacity.New(cfg.Capacity, cfg.TempCapacityExpiresAt)
 
-	// Clients
-	if p.rpc, err = rpc.NewClient(p.ctx, &rpc.ClientConfig{
-		L1Endpoint:        cfg.L1WsEndpoint,
-		L2Endpoint:        cfg.L2WsEndpoint,
-		TaikoL1Address:    cfg.TaikoL1Address,
-		TaikoL2Address:    cfg.TaikoL2Address,
-		TaikoTokenAddress: cfg.TaikoTokenAddress,
-		RetryInterval:     cfg.BackOffRetryInterval,
-		Timeout:           cfg.RPCTimeout,
-		BackOffMaxRetrys:  new(big.Int).SetUint64(p.cfg.BackOffMaxRetrys),
-	}); err != nil {
-		return err
+	if p.rpc, err = EndpointFromConfig(ctx, cfg); err != nil {
+		return nil, err
 	}
 
 	// Configs
 	protocolConfigs, err := p.rpc.TaikoL1.GetConfig(&bind.CallOpts{Context: ctx})
 	if err != nil {
-		return fmt.Errorf("failed to get protocol configs: %w", err)
+		return nil, fmt.Errorf("failed to get protocol configs: %w", err)
 	}
 	p.protocolConfigs = &protocolConfigs
 
@@ -147,7 +125,7 @@ func InitFromConfig(ctx context.Context, p *Prover, cfg *Config) (err error) {
 	p.proofGenerationCh = make(chan *proofProducer.ProofWithHeader, chBufferSize)
 	p.proveNotify = make(chan struct{}, 1)
 	if err := p.initL1Current(cfg.StartingBlockID); err != nil {
-		return fmt.Errorf("initialize L1 current cursor error: %w", err)
+		return nil, fmt.Errorf("initialize L1 current cursor error: %w", err)
 	}
 
 	// Concurrency guards
@@ -163,7 +141,7 @@ func InitFromConfig(ctx context.Context, p *Prover, cfg *Config) (err error) {
 		true,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	p.oracleProverAddress = oracleProverAddress
@@ -183,7 +161,7 @@ func InitFromConfig(ctx context.Context, p *Prover, cfg *Config) (err error) {
 			true,
 			p.protocolConfigs,
 		); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -204,7 +182,7 @@ func InitFromConfig(ctx context.Context, p *Prover, cfg *Config) (err error) {
 		p.cfg.ProveBlockTxReplacementMultiplier,
 		p.cfg.ProveBlockMaxTxGasTipCap,
 	); err != nil {
-		return err
+		return nil, err
 	}
 
 	// Prover server
@@ -222,10 +200,10 @@ func InitFromConfig(ctx context.Context, p *Prover, cfg *Config) (err error) {
 		proverServerOpts.ProverPrivateKey = p.cfg.OracleProverPrivateKey
 	}
 	if p.srv, err = server.New(proverServerOpts); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return p, nil
 }
 
 // Start starts the main loop of the L2 block prover.
@@ -324,6 +302,7 @@ func (p *Prover) Close(ctx context.Context) {
 		log.Error("Error shutting down http server", "error", err)
 	}
 	p.wg.Wait()
+	p.rpc.Close()
 }
 
 // proveOp performs a proving operation, find current unproven blocks, then
@@ -634,7 +613,7 @@ func (p *Prover) onBlockProposed(
 	go func() {
 		if err := backoff.Retry(
 			func() error { return handleBlockProposedEvent() },
-			backoff.WithMaxRetries(backoff.NewConstantBackOff(p.cfg.BackOffRetryInterval), p.cfg.BackOffMaxRetrys),
+			backoff.WithMaxRetries(backoff.NewConstantBackOff(p.cfg.BackOffRetryInterval), p.cfg.BackOffMaxRetries),
 		); err != nil {
 			p.currentBlocksBeingProvenMutex.Lock()
 			delete(p.currentBlocksBeingProven, event.BlockId.Uint64())
@@ -675,7 +654,7 @@ func (p *Prover) submitProofOp(ctx context.Context, proofWithHeader *proofProduc
 
 				return nil
 			},
-			backoff.WithMaxRetries(backoff.NewConstantBackOff(p.cfg.BackOffRetryInterval), p.cfg.BackOffMaxRetrys),
+			backoff.WithMaxRetries(backoff.NewConstantBackOff(p.cfg.BackOffRetryInterval), p.cfg.BackOffMaxRetries),
 		); err != nil {
 			log.Error("Submit proof error", "error", err)
 		}
@@ -809,8 +788,12 @@ func (p *Prover) initSubscription() {
 
 // closeSubscription closes all subscriptions.
 func (p *Prover) closeSubscription() {
-	p.blockVerifiedSub.Unsubscribe()
-	p.blockProposedSub.Unsubscribe()
+	if p.blockVerifiedSub != nil {
+		p.blockVerifiedSub.Unsubscribe()
+	}
+	if p.blockProposedSub != nil {
+		p.blockProposedSub.Unsubscribe()
+	}
 }
 
 // checkChainVerification checks if there is no new block verification in protocol, if so,
@@ -1061,7 +1044,7 @@ func (p *Prover) requestProofForBlockId(blockId *big.Int, l1Height *big.Int) err
 			func() error {
 				return handleBlockProposedEvent()
 			},
-			backoff.WithMaxRetries(backoff.NewConstantBackOff(p.cfg.BackOffRetryInterval), p.cfg.BackOffMaxRetrys),
+			backoff.WithMaxRetries(backoff.NewConstantBackOff(p.cfg.BackOffRetryInterval), p.cfg.BackOffMaxRetries),
 		); err != nil {
 			p.currentBlocksBeingProvenMutex.Lock()
 			defer p.currentBlocksBeingProvenMutex.Unlock()
@@ -1071,4 +1054,17 @@ func (p *Prover) requestProofForBlockId(blockId *big.Int, l1Height *big.Int) err
 	}()
 
 	return nil
+}
+
+// EndpointFromConfig generates an RPC client from the given configuration.
+func EndpointFromConfig(ctx context.Context, cfg *Config) (*rpc.Client, error) {
+	return rpc.NewClient(ctx, &rpc.ClientConfig{
+		L1Endpoint:       cfg.L1WsEndpoint,
+		L2Endpoint:       cfg.L2WsEndpoint,
+		TaikoL1Address:   cfg.TaikoL1Address,
+		TaikoL2Address:   cfg.TaikoL2Address,
+		RetryInterval:    cfg.BackOffRetryInterval,
+		Timeout:          cfg.RPCTimeout,
+		BackOffMaxRetrys: new(big.Int).SetUint64(cfg.BackOffMaxRetries),
+	})
 }

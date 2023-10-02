@@ -3,35 +3,44 @@ package anchorTxConstructor
 import (
 	"context"
 	"math/big"
-	"os"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
+	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	"github.com/taikoxyz/taiko-client/testutils"
+	"github.com/taikoxyz/taiko-client/testutils/helper"
 )
 
 type AnchorTxConstructorTestSuite struct {
 	testutils.ClientTestSuite
-	l1Height *big.Int
-	l1Hash   common.Hash
-	c        *AnchorTxConstructor
+	l1Height  *big.Int
+	l1Hash    common.Hash
+	c         *AnchorTxConstructor
+	rpcClient *rpc.Client
 }
 
 func (s *AnchorTxConstructorTestSuite) SetupTest() {
 	s.ClientTestSuite.SetupTest()
+	s.rpcClient = helper.NewWsRpcClient(&s.ClientTestSuite)
+
 	c, err := New(
-		s.RpcClient,
-		common.HexToAddress(os.Getenv("L1_SIGNAL_SERVICE_CONTRACT_ADDRESS")),
+		s.rpcClient,
+		s.L1.TaikoL1SignalService,
 	)
 	s.Nil(err)
-	head, err := s.RpcClient.L1.BlockByNumber(context.Background(), nil)
+	head, err := s.rpcClient.L1.BlockByNumber(context.Background(), nil)
 	s.Nil(err)
 	s.l1Height = head.Number()
 	s.l1Hash = head.Hash()
 	s.c = c
+}
+
+func (s *AnchorTxConstructorTestSuite) TearDownTest() {
+	s.rpcClient.Close()
+	s.ClientTestSuite.TearDownTest()
 }
 
 func (s *AnchorTxConstructorTestSuite) TestGasLimit() {
@@ -45,13 +54,10 @@ func (s *AnchorTxConstructorTestSuite) TestAssembleAnchorTx() {
 }
 
 func (s *AnchorTxConstructorTestSuite) TestNewAnchorTransactor() {
-	goldenTouchAddress, err := s.RpcClient.TaikoL2.GOLDENTOUCHADDRESS(nil)
+	goldenTouchAddress, err := s.rpcClient.TaikoL2.GOLDENTOUCHADDRESS(nil)
 	s.Nil(err)
 
-	c, err := New(
-		s.RpcClient,
-		common.HexToAddress(os.Getenv("L1_SIGNAL_SERVICE_CONTRACT_ADDRESS")),
-	)
+	c, err := New(s.rpcClient, s.L1.TaikoL1SignalService)
 	s.Nil(err)
 
 	opts, err := c.transactOpts(context.Background(), common.Big1, common.Big256)
@@ -74,7 +80,7 @@ func (s *AnchorTxConstructorTestSuite) TestCancelCtxTransactOpts() {
 func (s *AnchorTxConstructorTestSuite) TestSign() {
 	// Payload 1
 	hash := hexutil.MustDecode("0x44943399d1507f3ce7525e9be2f987c3db9136dc759cb7f92f742154196868b9")
-	signatureBytes := testutils.SignatureFromRSV(
+	signatureBytes := helper.SignatureFromRSV(
 		"0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
 		"0x782a1e70872ecc1a9f740dd445664543f8b7598c94582720bca9a8c48d6a4766",
 		1,
@@ -89,7 +95,7 @@ func (s *AnchorTxConstructorTestSuite) TestSign() {
 
 	// Payload 2
 	hash = hexutil.MustDecode("0x663d210fa6dba171546498489de1ba024b89db49e21662f91bf83cdffe788820")
-	signatureBytes = testutils.SignatureFromRSV(
+	signatureBytes = helper.SignatureFromRSV(
 		"0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
 		"0x568130fab1a3a9e63261d4278a7e130588beb51f27de7c20d0258d38a85a27ff",
 		1,
@@ -104,7 +110,7 @@ func (s *AnchorTxConstructorTestSuite) TestSign() {
 }
 
 func (s *AnchorTxConstructorTestSuite) TestSignShortHash() {
-	rand := testutils.RandomHash().Bytes()
+	rand := helper.RandomHash().Bytes()
 	hash := rand[:len(rand)-2]
 	_, err := s.c.signTxPayload(hash)
 	s.ErrorContains(err, "hash is required to be exactly 32 bytes")

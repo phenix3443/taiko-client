@@ -3,7 +3,7 @@ package proposer
 import (
 	"context"
 	"math/big"
-	"os"
+	"net/url"
 	"testing"
 	"time"
 
@@ -14,46 +14,58 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/taikoxyz/taiko-client/bindings"
 	"github.com/taikoxyz/taiko-client/bindings/encoding"
+	"github.com/taikoxyz/taiko-client/pkg/rpc"
+	"github.com/taikoxyz/taiko-client/prover/server"
 	"github.com/taikoxyz/taiko-client/testutils"
+	"github.com/taikoxyz/taiko-client/testutils/helper"
 )
 
 type ProposerTestSuite struct {
 	testutils.ClientTestSuite
-	p      *Proposer
-	cancel context.CancelFunc
+	p               *Proposer
+	cancel          context.CancelFunc
+	rpcClient       *rpc.Client
+	proverEndpoints []*url.URL
+	proverServer    *server.ProverServer
 }
 
 func (s *ProposerTestSuite) SetupTest() {
 	s.ClientTestSuite.SetupTest()
-
-	l1ProposerPrivKey, err := crypto.ToECDSA(common.Hex2Bytes(os.Getenv("L1_PROPOSER_PRIVATE_KEY")))
-	s.Nil(err)
-
-	p := new(Proposer)
+	s.rpcClient = helper.NewWsRpcClient(&s.ClientTestSuite)
+	var err error
+	s.proverEndpoints, s.proverServer, err = helper.DefaultFakeProver(&s.ClientTestSuite, s.rpcClient)
+	s.NoError(err)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	proposeInterval := 1024 * time.Hour // No need to periodically propose transactions list in unit tests
 
-	s.Nil(InitFromConfig(ctx, p, (&Config{
-		L1Endpoint:                          os.Getenv("L1_NODE_WS_ENDPOINT"),
-		L2Endpoint:                          os.Getenv("L2_EXECUTION_ENGINE_HTTP_ENDPOINT"),
-		TaikoL1Address:                      common.HexToAddress(os.Getenv("TAIKO_L1_ADDRESS")),
-		TaikoL2Address:                      common.HexToAddress(os.Getenv("TAIKO_L2_ADDRESS")),
-		TaikoTokenAddress:                   common.HexToAddress(os.Getenv("TAIKO_TOKEN_ADDRESS")),
-		L1ProposerPrivKey:                   l1ProposerPrivKey,
-		L2SuggestedFeeRecipient:             common.HexToAddress(os.Getenv("L2_SUGGESTED_FEE_RECIPIENT")),
+	cfg := &Config{
+		L1Endpoint:                          s.L1.WsEndpoint(),
+		L2Endpoint:                          s.L2.HttpEndpoint(),
+		TaikoL1Address:                      s.L1.TaikoL1Address,
+		TaikoL2Address:                      testutils.TaikoL2Address,
+		TaikoTokenAddress:                   s.L1.TaikoL1TokenAddress,
+		L1ProposerPrivKey:                   testutils.ProposerPrivKey,
+		L2SuggestedFeeRecipient:             testutils.ProposerAddress,
 		ProposeInterval:                     &proposeInterval,
 		MaxProposedTxListsPerEpoch:          1,
 		ProposeBlockTxReplacementMultiplier: 2,
 		WaitReceiptTimeout:                  10 * time.Second,
-		ProverEndpoints:                     s.ProverEndpoints,
+		ProverEndpoints:                     s.proverEndpoints,
 		BlockProposalFee:                    common.Big256,
-		BlockProposalFeeIncreasePercentage:  common.Big2,
+		BlockProposalFeeIncreasePercentage:  2,
 		BlockProposalFeeIterations:          3,
-	})))
-
-	s.p = p
+	}
+	s.p, err = New(ctx, cfg)
+	s.NoError(err)
 	s.cancel = cancel
+}
+
+func (s *ProposerTestSuite) TearDownTest() {
+	s.p.Close(context.Background())
+	_ = s.proverServer.Shutdown(context.Background())
+	s.rpcClient.Close()
+	s.ClientTestSuite.TearDownTest()
 }
 
 func (s *ProposerTestSuite) TestName() {
@@ -71,7 +83,7 @@ func (s *ProposerTestSuite) TestProposeOp() {
 		close(sink)
 	}()
 
-	nonce, err := s.p.rpc.L2.PendingNonceAt(context.Background(), s.TestAddr)
+	nonce, err := s.p.rpc.L2.PendingNonceAt(context.Background(), testutils.ProposerAddress)
 	s.Nil(err)
 
 	gaslimit := 21000
@@ -82,9 +94,9 @@ func (s *ProposerTestSuite) TestProposeOp() {
 	baseFee, err := s.p.rpc.TaikoL2.GetBasefee(nil, 1, uint32(parent.GasUsed()))
 	s.Nil(err)
 
-	to := common.BytesToAddress(testutils.RandomBytes(32))
+	to := common.BytesToAddress(helper.RandomBytes(32))
 	tx := types.NewTx(&types.DynamicFeeTx{
-		ChainID:   s.RpcClient.L2ChainID,
+		ChainID:   s.rpcClient.L2ChainID,
 		Nonce:     nonce,
 		GasTipCap: common.Big0,
 		GasFeeCap: new(big.Int).SetUint64(baseFee.Uint64() * 2),
@@ -93,7 +105,7 @@ func (s *ProposerTestSuite) TestProposeOp() {
 		Value:     common.Big1,
 	})
 
-	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(s.p.rpc.L2ChainID), s.TestAddrPrivKey)
+	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(s.p.rpc.L2ChainID), testutils.ProposerPrivKey)
 	s.Nil(err)
 	s.Nil(s.p.rpc.L2.SendTransaction(context.Background(), signedTx))
 
@@ -133,13 +145,13 @@ func (s *ProposerTestSuite) TestSendProposeBlockTx() {
 		context.Background(),
 		s.p.rpc.L1,
 		s.p.l1ProposerPrivKey,
-		s.RpcClient.L1ChainID,
+		s.rpcClient.L1ChainID,
 		fee,
 	)
 	s.Nil(err)
 	s.Greater(opts.GasTipCap.Uint64(), uint64(0))
 
-	nonce, err := s.RpcClient.L1.PendingNonceAt(context.Background(), s.p.l1ProposerAddress)
+	nonce, err := s.rpcClient.L1.PendingNonceAt(context.Background(), s.p.l1ProposerAddress)
 	s.Nil(err)
 
 	tx := types.NewTransaction(
@@ -154,9 +166,9 @@ func (s *ProposerTestSuite) TestSendProposeBlockTx() {
 	s.SetL1Automine(false)
 	defer s.SetL1Automine(true)
 
-	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(s.RpcClient.L1ChainID), s.p.l1ProposerPrivKey)
+	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(s.rpcClient.L1ChainID), s.p.l1ProposerPrivKey)
 	s.Nil(err)
-	s.Nil(s.RpcClient.L1.SendTransaction(context.Background(), signedTx))
+	s.Nil(s.rpcClient.L1.SendTransaction(context.Background(), signedTx))
 
 	var emptyTxs []types.Transaction
 	encoded, err := rlp.EncodeToBytes(emptyTxs)
@@ -189,7 +201,7 @@ func (s *ProposerTestSuite) TestSendProposeBlockTx() {
 func (s *ProposerTestSuite) TestAssignProverSuccessFirstRound() {
 	meta := &encoding.TaikoL1BlockMetadataInput{
 		Proposer:        s.p.L2SuggestedFeeRecipient(),
-		TxListHash:      testutils.RandomHash(),
+		TxListHash:      helper.RandomHash(),
 		TxListByteStart: common.Big0,
 		TxListByteEnd:   common.Big0,
 		CacheTxListInfo: false,

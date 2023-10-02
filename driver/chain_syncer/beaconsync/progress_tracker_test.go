@@ -8,18 +8,26 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
+	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	"github.com/taikoxyz/taiko-client/testutils"
+	"github.com/taikoxyz/taiko-client/testutils/helper"
 )
 
 type BeaconSyncProgressTrackerTestSuite struct {
 	testutils.ClientTestSuite
-	t *SyncProgressTracker
+	t         *SyncProgressTracker
+	rpcClient *rpc.Client
 }
 
 func (s *BeaconSyncProgressTrackerTestSuite) SetupTest() {
 	s.ClientTestSuite.SetupTest()
+	s.rpcClient = helper.NewWsRpcClient(&s.ClientTestSuite)
+	s.t = NewSyncProgressTracker(s.rpcClient.L2, 30*time.Second)
+}
 
-	s.t = NewSyncProgressTracker(s.RpcClient.L2, 30*time.Second)
+func (s *BeaconSyncProgressTrackerTestSuite) TearDownTest() {
+	s.rpcClient.Close()
+	s.ClientTestSuite.TearDownTest()
 }
 
 func (s *BeaconSyncProgressTrackerTestSuite) TestSyncProgressed() {
@@ -58,7 +66,7 @@ func (s *BeaconSyncProgressTrackerTestSuite) TestTrack() {
 
 	// Triggered
 	ctx, cancel = context.WithCancel(context.Background())
-	s.t.UpdateMeta(common.Big256, common.Big256, testutils.RandomHash())
+	s.t.UpdateMeta(common.Big256, common.Big256, helper.RandomHash())
 	go s.t.Track(ctx)
 	time.Sleep(syncProgressCheckInterval + 5*time.Second)
 	cancel()
@@ -101,7 +109,7 @@ func (s *BeaconSyncProgressTrackerTestSuite) TestLastSyncedVerifiedBlockHash() {
 		common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000"),
 		s.t.LastSyncedVerifiedBlockHash(),
 	)
-	randomHash := testutils.RandomHash()
+	randomHash := helper.RandomHash()
 	s.t.lastSyncedVerifiedBlockHash = randomHash
 	s.Equal(randomHash, s.t.LastSyncedVerifiedBlockHash())
 }

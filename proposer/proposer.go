@@ -25,7 +25,6 @@ import (
 	"github.com/taikoxyz/taiko-client/metrics"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	selector "github.com/taikoxyz/taiko-client/proposer/prover_selector"
-	"github.com/urfave/cli/v2"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -76,20 +75,11 @@ type Proposer struct {
 	cfg *Config
 }
 
-// New initializes the given proposer instance based on the command line flags.
-func (p *Proposer) InitFromCli(ctx context.Context, c *cli.Context) error {
-	cfg, err := NewConfigFromCliContext(c)
-	if err != nil {
-		return err
-	}
-
-	return InitFromConfig(ctx, p, cfg)
-}
-
-// InitFromConfig initializes the proposer instance based on the given configurations.
-func InitFromConfig(ctx context.Context, p *Proposer, cfg *Config) (err error) {
+// New initializes the proposer instance based on the given configurations.
+func New(ctx context.Context, cfg *Config) (p *Proposer, err error) {
+	p = &Proposer{}
 	p.l1ProposerPrivKey = cfg.L1ProposerPrivKey
-	p.l1ProposerAddress = crypto.PubkeyToAddress(cfg.L1ProposerPrivKey.PublicKey)
+	p.l1ProposerAddress = crypto.PubkeyToAddress(p.l1ProposerPrivKey.PublicKey)
 	p.l2SuggestedFeeRecipient = cfg.L2SuggestedFeeRecipient
 	p.proposingInterval = cfg.ProposeInterval
 	p.proposeEmptyBlocksInterval = cfg.ProposeEmptyBlocksInterval
@@ -103,24 +93,13 @@ func InitFromConfig(ctx context.Context, p *Proposer, cfg *Config) (err error) {
 	p.ctx = ctx
 	p.waitReceiptTimeout = cfg.WaitReceiptTimeout
 	p.cfg = cfg
-
-	// RPC clients
-	if p.rpc, err = rpc.NewClient(p.ctx, &rpc.ClientConfig{
-		L1Endpoint:        cfg.L1Endpoint,
-		L2Endpoint:        cfg.L2Endpoint,
-		TaikoL1Address:    cfg.TaikoL1Address,
-		TaikoL2Address:    cfg.TaikoL2Address,
-		TaikoTokenAddress: cfg.TaikoTokenAddress,
-		RetryInterval:     cfg.BackOffRetryInterval,
-		Timeout:           cfg.RPCTimeout,
-	}); err != nil {
-		return fmt.Errorf("initialize rpc clients error: %w", err)
+	if p.rpc, err = EndpointFromConfig(ctx, cfg); err != nil {
+		return nil, err
 	}
-
 	// Protocol configs
 	protocolConfigs, err := p.rpc.TaikoL1.GetConfig(&bind.CallOpts{Context: ctx})
 	if err != nil {
-		return fmt.Errorf("failed to get protocol configs: %w", err)
+		return nil, fmt.Errorf("failed to get protocol configs: %w", err)
 	}
 	p.protocolConfigs = &protocolConfigs
 
@@ -131,16 +110,16 @@ func InitFromConfig(ctx context.Context, p *Proposer, cfg *Config) (err error) {
 		p.rpc,
 		cfg.TaikoL1Address,
 		cfg.BlockProposalFee,
-		cfg.BlockProposalFeeIncreasePercentage,
+		new(big.Int).SetUint64(cfg.BlockProposalFeeIncreasePercentage),
 		cfg.ProverEndpoints,
 		cfg.BlockProposalFeeIterations,
 		proverAssignmentTimeout,
 		requestProverServerTimeout,
 	); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return p, nil
 }
 
 // Start starts the proposer's main loop.
@@ -157,7 +136,7 @@ func (p *Proposer) eventLoop() {
 		p.wg.Done()
 	}()
 
-	var lastNonEmptyBlockProposedAt = time.Now()
+	lastNonEmptyBlockProposedAt := time.Now()
 	for {
 		p.updateProposingTicker()
 
@@ -197,6 +176,7 @@ func (p *Proposer) eventLoop() {
 // Close closes the proposer instance.
 func (p *Proposer) Close(ctx context.Context) {
 	p.wg.Wait()
+	p.rpc.Close()
 }
 
 // ProposeOp performs a proposing operation, fetching transactions
@@ -312,7 +292,7 @@ func (p *Proposer) ProposeOp(ctx context.Context) error {
 					TxListByteEnd:   new(big.Int).SetUint64(uint64(len(txListBytes))),
 					CacheTxListInfo: false,
 				}, txListBytes, uint(txs.Len()), &txNonce); err != nil {
-					return fmt.Errorf("failed to propose transactions: %w", err)
+					return err
 				}
 
 				return nil
@@ -511,4 +491,17 @@ func getTxOpts(
 	opts.Value = fee
 
 	return opts, nil
+}
+
+// EndpointFromConfig generates an RPC client from a given configuration.
+func EndpointFromConfig(ctx context.Context, cfg *Config) (*rpc.Client, error) {
+	return rpc.NewClient(ctx, &rpc.ClientConfig{
+		L1Endpoint:        cfg.L1Endpoint,
+		L2Endpoint:        cfg.L2Endpoint,
+		TaikoL1Address:    cfg.TaikoL1Address,
+		TaikoL2Address:    cfg.TaikoL2Address,
+		TaikoTokenAddress: cfg.TaikoTokenAddress,
+		RetryInterval:     cfg.BackOffRetryInterval,
+		Timeout:           cfg.RPCTimeout,
+	})
 }

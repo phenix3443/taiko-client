@@ -2,34 +2,41 @@ package anchorTxValidator
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
+	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	"github.com/taikoxyz/taiko-client/testutils"
+	"github.com/taikoxyz/taiko-client/testutils/helper"
 )
 
 type AnchorTxValidatorTestSuite struct {
 	testutils.ClientTestSuite
-	v *AnchorTxValidator
+	v         *AnchorTxValidator
+	rpcClient *rpc.Client
 }
 
 func (s *AnchorTxValidatorTestSuite) SetupTest() {
 	s.ClientTestSuite.SetupTest()
-
-	validator, err := New(common.HexToAddress(os.Getenv("TAIKO_L2_ADDRESS")), s.RpcClient.L2ChainID, s.RpcClient)
+	s.rpcClient = helper.NewWsRpcClient(&s.ClientTestSuite)
+	validator, err := New(testutils.TaikoL2Address, s.rpcClient.L2ChainID, s.rpcClient)
 	s.Nil(err)
 	s.v = validator
+}
+
+func (s *AnchorTxValidatorTestSuite) TearDownTest() {
+	s.rpcClient.Close()
+	s.ClientTestSuite.TearDownTest()
 }
 
 func (s *AnchorTxValidatorTestSuite) TestValidateAnchorTx() {
 	wrongPrivKey, err := crypto.HexToECDSA("2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501200")
 	s.Nil(err)
 
-	goldenTouchPrivKey, err := s.RpcClient.TaikoL2.GOLDENTOUCHPRIVATEKEY(nil)
+	goldenTouchPrivKey, err := s.rpcClient.TaikoL2.GOLDENTOUCHPRIVATEKEY(nil)
 	s.Nil(err)
 
 	// 0x92954368afd3caa1f3ce3ead0069c1af414054aefe1ef9aeacc1bf426222ce38
@@ -39,7 +46,7 @@ func (s *AnchorTxValidatorTestSuite) TestValidateAnchorTx() {
 	// invalid To
 	tx := types.NewTransaction(
 		0,
-		common.BytesToAddress(testutils.RandomBytes(1024)), common.Big0, 0, common.Big0, []byte{},
+		common.BytesToAddress(helper.RandomBytes(1024)), common.Big0, 0, common.Big0, []byte{},
 	)
 	s.ErrorContains(s.v.ValidateAnchorTx(context.Background(), tx), "invalid TaikoL2.anchor transaction to")
 
@@ -71,7 +78,7 @@ func (s *AnchorTxValidatorTestSuite) TestValidateAnchorTx() {
 func (s *AnchorTxValidatorTestSuite) TestGetAndValidateAnchorTxReceipt() {
 	tx := types.NewTransaction(
 		100,
-		common.BytesToAddress(testutils.RandomBytes(32)),
+		common.BytesToAddress(helper.RandomBytes(32)),
 		common.Big1,
 		100000,
 		common.Big1,

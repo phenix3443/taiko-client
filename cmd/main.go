@@ -4,11 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/taikoxyz/taiko-client/cmd/flags"
-	"github.com/taikoxyz/taiko-client/cmd/utils"
-	"github.com/taikoxyz/taiko-client/driver"
-	"github.com/taikoxyz/taiko-client/proposer"
-	"github.com/taikoxyz/taiko-client/prover"
 	"github.com/taikoxyz/taiko-client/version"
 	"github.com/urfave/cli/v2"
 )
@@ -27,25 +22,25 @@ func main() {
 	// All supported sub commands.
 	app.Commands = []*cli.Command{
 		{
-			Name:        "driver",
-			Flags:       flags.DriverFlags,
+			Name:        driverCmd,
+			Flags:       driverFlags,
 			Usage:       "Starts the driver software",
 			Description: "Taiko driver software",
-			Action:      utils.SubcommandAction(new(driver.Driver)),
+			Action:      startSubCmd,
 		},
 		{
-			Name:        "proposer",
-			Flags:       flags.ProposerFlags,
+			Name:        proposerCmd,
+			Flags:       proposerFlags,
 			Usage:       "Starts the proposer software",
 			Description: "Taiko proposer software",
-			Action:      utils.SubcommandAction(new(proposer.Proposer)),
+			Action:      startSubCmd,
 		},
 		{
-			Name:        "prover",
-			Flags:       flags.ProverFlags,
+			Name:        proverCmd,
+			Flags:       proverFlags,
 			Usage:       "Starts the prover software",
 			Description: "Taiko prover software",
-			Action:      utils.SubcommandAction(new(prover.Prover)),
+			Action:      startSubCmd,
 		},
 	}
 

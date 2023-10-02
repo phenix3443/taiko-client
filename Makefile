@@ -7,7 +7,7 @@ LD_FLAGS_ARGS +=-X github.com/taikoxyz/taiko-client/version.GitDate=$(GIT_DATE)
 LD_FLAGS := -ldflags "$(LD_FLAGS_ARGS)"
 
 build:
-	GO111MODULE=on go build -v $(LD_FLAGS) -o bin/taiko-client cmd/main.go
+	GO111MODULE=on go build -v $(LD_FLAGS) -o bin/taiko-client cmd/*.go
 
 clean:
 	@rm -rf bin/*
@@ -17,11 +17,9 @@ lint:
 	&& golangci-lint run
 
 test:
-	@TAIKO_MONO_DIR=${TAIKO_MONO_DIR} \
-	COMPILE_PROTOCOL=${COMPILE_PROTOCOL} \
-	PACKAGE=${PACKAGE} \
-	RUN_TESTS=true \
-		./integration_test/entrypoint.sh
+	docker pull ghcr.io/foundry-rs/foundry:latest  \
+	&& docker pull gcr.io/evmchain/taiko-geth:taiko  \
+	&& go test ./... -coverprofile=coverage.out -covermode=atomic -timeout=300s
 
 dev_net:
 	@TAIKO_MONO_DIR=${TAIKO_MONO_DIR} \
