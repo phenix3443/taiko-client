@@ -2,8 +2,8 @@
 >
 # taiko-client
 
-[![CI](https://github.com/taikoxyz/taiko-client/actions/workflows/test.yml/badge.svg)](https://github.com/taikoxyz/taiko-client/actions/workflows/test.yml)
-[![Codecov](https://img.shields.io/codecov/c/github/taikoxyz/taiko-client?logo=codecov&token=OH6BJMVP6O)](https://codecov.io/gh/taikoxyz/taiko-client)
+[![Run Test](https://github.com/phenix3443/taiko-client/actions/workflows/test.yml/badge.svg)](https://github.com/phenix3443/taiko-client/actions/workflows/test.yml)
+[![Docker Image](https://github.com/phenix3443/taiko-client/actions/workflows/docker.yml/badge.svg)](https://github.com/phenix3443/taiko-client/actions/workflows/docker.yml)
 
 Taiko protocol's client software implementation in Go. Learn more about Taiko nodes with [the docs](https://taiko.xyz/docs/concepts/taiko-nodes).
 
