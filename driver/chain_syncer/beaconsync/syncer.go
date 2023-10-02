@@ -7,9 +7,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/beacon/engine"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/taikoxyz/taiko-client/bindings/encoding"
 	"github.com/taikoxyz/taiko-client/driver/state"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings/encoding"
 )
 
 // Syncer responsible for letting the L2 execution engine catching up with protocol's latest
@@ -97,9 +97,7 @@ func (s *Syncer) TriggerBeaconSync() error {
 // getVerifiedBlockPayload fetches the latest verified block's header, and converts it to an Engine API executable data,
 // which will be used to let the node to start beacon syncing.
 func (s *Syncer) getVerifiedBlockPayload(ctx context.Context) (*big.Int, *engine.ExecutableData, error) {
-	var (
-		latestVerifiedBlock = s.state.GetLatestVerifiedBlock()
-	)
+	latestVerifiedBlock := s.state.GetLatestVerifiedBlock()
 
 	header, err := s.rpc.L2CheckPoint.HeaderByNumber(s.ctx, latestVerifiedBlock.ID)
 	if err != nil {

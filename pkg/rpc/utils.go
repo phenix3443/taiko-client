@@ -16,8 +16,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient/gethclient"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/taikoxyz/taiko-client/bindings"
-	"github.com/taikoxyz/taiko-client/bindings/encoding"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings/encoding"
 )
 
 var (

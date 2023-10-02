@@ -12,12 +12,12 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/stretchr/testify/suite"
-	"github.com/taikoxyz/taiko-client/bindings"
-	"github.com/taikoxyz/taiko-client/bindings/encoding"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	"github.com/taikoxyz/taiko-client/prover/server"
 	"github.com/taikoxyz/taiko-client/testutils"
 	"github.com/taikoxyz/taiko-client/testutils/helper"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings/encoding"
 )
 
 type ProposerTestSuite struct {

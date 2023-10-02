@@ -11,9 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/taikoxyz/taiko-client/bindings"
-	"github.com/taikoxyz/taiko-client/bindings/encoding"
 	"github.com/taikoxyz/taiko-client/testutils"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings/encoding"
 )
 
 func ProposeInvalidTxListBytes(s *testutils.ClientTestSuite, proposer testutils.Proposer) {

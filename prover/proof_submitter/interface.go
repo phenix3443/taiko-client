@@ -4,8 +4,8 @@ import (
 	"context"
 	"math/big"
 
-	"github.com/taikoxyz/taiko-client/bindings"
 	proofProducer "github.com/taikoxyz/taiko-client/prover/proof_producer"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
 )
 
 type ProofSubmitter interface {

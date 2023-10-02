@@ -8,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/taikoxyz/taiko-client/bindings"
 	eventIterator "github.com/taikoxyz/taiko-client/pkg/chain_iterator/event_iterator"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
 )
 
 // GetL1Current reads the L1 current cursor concurrent safely.
@@ -39,9 +39,7 @@ func (s *State) ResetL1Current(
 
 	log.Info("Reset L1 current cursor", "heightOrID", heightOrID)
 
-	var (
-		err error
-	)
+	var err error
 
 	if (heightOrID.ID != nil && heightOrID.ID.Cmp(common.Big0) == 0) ||
 		(heightOrID.Height != nil && heightOrID.Height.Cmp(common.Big0) == 0) {
@@ -85,7 +83,6 @@ func (s *State) ResetL1Current(
 				},
 			},
 		)
-
 		if err != nil {
 			return nil, nil, err
 		}
@@ -120,7 +117,6 @@ func (s *State) ResetL1Current(
 			},
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}

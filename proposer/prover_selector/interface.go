@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"net/url"
 
-	"github.com/taikoxyz/taiko-client/bindings/encoding"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings/encoding"
 )
 
 type ProverSelector interface {

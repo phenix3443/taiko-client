@@ -15,14 +15,12 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/taikoxyz/taiko-client/bindings"
-	"github.com/taikoxyz/taiko-client/bindings/encoding"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings/encoding"
 )
 
-var (
-	errUnretryable = errors.New("unretryable")
-)
+var errUnretryable = errors.New("unretryable")
 
 // isSubmitProofTxErrorRetryable checks whether the error returned by a proof submission transaction
 // is retryable.

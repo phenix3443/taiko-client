@@ -20,11 +20,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/taikoxyz/taiko-client/bindings"
-	"github.com/taikoxyz/taiko-client/bindings/encoding"
 	"github.com/taikoxyz/taiko-client/metrics"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	selector "github.com/taikoxyz/taiko-client/proposer/prover_selector"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings/encoding"
 	"golang.org/x/sync/errgroup"
 )
 

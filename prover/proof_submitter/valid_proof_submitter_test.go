@@ -12,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
-	"github.com/taikoxyz/taiko-client/bindings"
 	"github.com/taikoxyz/taiko-client/driver/chain_syncer/beaconsync"
 	"github.com/taikoxyz/taiko-client/driver/chain_syncer/calldata"
 	"github.com/taikoxyz/taiko-client/driver/state"
@@ -22,6 +21,7 @@ import (
 	"github.com/taikoxyz/taiko-client/prover/server"
 	"github.com/taikoxyz/taiko-client/testutils"
 	"github.com/taikoxyz/taiko-client/testutils/helper"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
 )
 
 type ProofSubmitterTestSuite struct {

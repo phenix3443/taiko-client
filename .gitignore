@@ -15,9 +15,3 @@ coverage.out
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-
-# Editors
-.vscode
-
-# Testing
-integration_test/nodes/deployments/mainnet.json

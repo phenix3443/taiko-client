@@ -12,12 +12,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/go-resty/resty/v2"
-	"github.com/taikoxyz/taiko-client/bindings"
 	"github.com/taikoxyz/taiko-client/pkg/jwt"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	capacity "github.com/taikoxyz/taiko-client/prover/capacity_manager"
 	"github.com/taikoxyz/taiko-client/prover/server"
 	"github.com/taikoxyz/taiko-client/testutils"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
 )
 
 // NewFakeProver starts a new prover server that has channel listeners to respond and react

@@ -15,12 +15,12 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/taikoxyz/taiko-client/bindings"
-	"github.com/taikoxyz/taiko-client/bindings/encoding"
 	"github.com/taikoxyz/taiko-client/metrics"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
 	anchorTxValidator "github.com/taikoxyz/taiko-client/prover/anchor_tx_validator"
 	proofProducer "github.com/taikoxyz/taiko-client/prover/proof_producer"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings/encoding"
 )
 
 var _ ProofSubmitter = (*ValidProofSubmitter)(nil)

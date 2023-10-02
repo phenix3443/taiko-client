@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/suite"
-	"github.com/taikoxyz/taiko-client/bindings"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
 )
 
 func (s *ClientTestSuite) TestDocker() {

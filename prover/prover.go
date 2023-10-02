@@ -18,8 +18,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/taikoxyz/taiko-client/bindings"
-	"github.com/taikoxyz/taiko-client/bindings/encoding"
 	"github.com/taikoxyz/taiko-client/metrics"
 	eventIterator "github.com/taikoxyz/taiko-client/pkg/chain_iterator/event_iterator"
 	"github.com/taikoxyz/taiko-client/pkg/rpc"
@@ -27,6 +25,8 @@ import (
 	proofProducer "github.com/taikoxyz/taiko-client/prover/proof_producer"
 	proofSubmitter "github.com/taikoxyz/taiko-client/prover/proof_submitter"
 	"github.com/taikoxyz/taiko-client/prover/server"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings"
+	"github.com/taikoxyz/taiko-mono/packages/protocol/bindings/encoding"
 )
 
 var errNoCapacity = errors.New("no prover capacity available")
